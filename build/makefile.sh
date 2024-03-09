@@ -1,0 +1,1 @@
+g++ -I/usr/include/mariadb/server  -std=c++11  ./src/srDailyTask.cpp  -o srDailyTask
