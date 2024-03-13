@@ -8,9 +8,9 @@
 #include <iostream>
 #include <map>
 
-#include "common/JsonParse.h"
-#include "common/Log.h"
-#include "common/Tool.h"
+#include "JsonParse.h"
+#include "Log.h"
+#include "Tool.h"
 
 // 设置全局变量g_configMap，储存config.conf,设置日志级别等内容
 std::map<std::string, std::string> g_configMap;
@@ -75,8 +75,17 @@ int main(int argc, char* argv[]){
 
 	// 初始化日志，设置日志级别
 	Log::initLogLevel();
-
-
+	auto iter = g_configMap.find("LogLevel");
+	if(iter == g_configMap.end()){
+		std::cout << "Failed to load the loglevel" << std::endl;
+		Log::debug("Failed to load the loglevel!", __FILE__, __LINE__);
+	}
+	else{
+		std::cout << "Loglevel is " << g_configMap["LogLevel"] << std::endl;
+		std::string message = "LogLevel is "  + g_configMap["LogLevel"] ;
+		Log::debug(message, __FILE__, __LINE__);
+	}
+	
 
 
     return 0;

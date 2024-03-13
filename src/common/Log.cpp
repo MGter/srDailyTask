@@ -2,6 +2,9 @@
 #include <iostream>
 #include <ctime>
 
+LogLevel Log::m_logLevel = DEBUG;
+std::string Log::m_logPath = "./log/";
+std::ofstream Log::m_logFile;
 
 void Log::initLogLevel() {
     if (g_configMap.find("LogLevel") != g_configMap.end()) {
@@ -35,7 +38,7 @@ void Log::debug(const std::string& message, const char* file, int line) {
     if (m_logLevel <= DEBUG) {
         std::string timeString;
         getCurrentTime(timeString);
-        std::string logLine = "[" + timeString + "][DEBUG][" + file + ":" + std::to_string(line) + "] " + message + "\n";
+        std::string logLine = "[" + timeString + "][DEBUG][" + file + ":" + std::to_string(line) + "] " + message + "\n"; 
         writeLog(logLine);
     }
 }
@@ -73,9 +76,27 @@ void Log::createLogFile() {
     std::string logDir = m_logPath + "/" + oss.str();
     std::string logFilename = logDir + "/" + oss.str() + ".log";
 
-    if (!std::filesystem::exists(logDir)) {
-        std::filesystem::create_directories(logDir);
+    if (!directoryExists(logDir)) {
+        createDirectory(logDir);
     }
 
     m_logFile.open(logFilename, std::ios_base::app);
+}
+
+void Log::closeLogFile() {
+    if (m_logFile.is_open()) {
+        m_logFile.close();
+    }
+    else{
+        std::cout << "[" << __FILE__ << "][" << __LINE__ << "]" << "Func: closeLogFile: No logfile open!" << std::endl;
+    }
+}
+
+void Log::writeLog(const std::string& logLine) {
+    if (m_logFile.is_open()) {
+        m_logFile << logLine << std::endl;
+    }
+    else{
+        std::cout << "[" << __FILE__ << "][" << __LINE__ << "]" << "Func:writeLog: No logfile open!" << std::endl;
+    }
 }
