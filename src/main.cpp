@@ -52,7 +52,7 @@ static void WidebrightSegvHandler(int signum)
 
 
 int main(int argc, char* argv[]){
-    std::cout << "youcan do it !"<< std::endl;
+	Log::info(__FILE__, __LINE__, "Starting srDailyTask...");
 
 	signal(SIGINT, SigIntHandler);
 	signal(SIGSEGV, WidebrightSegvHandler);
@@ -69,24 +69,7 @@ int main(int argc, char* argv[]){
 		printf("block sigpipe error\n");
 	}
 
-	// 初始化conf文件
-	std::string conf_path = "./conf/product.conf";
-	initConf(conf_path);
-
-
-	// 设置日志相关内容
-	auto iter = g_configMap.find("LogLevel");
-	if(iter == g_configMap.end()){
-		std::cout << "Failed to load the loglevel" << std::endl;
-	}
-	else{
-		std::cout << "Loglevel is " << g_configMap["LogLevel"] << std::endl;
-		std::string message = "LogLevel is "  + g_configMap["LogLevel"] ;
-	}
-
-	Log::init(LogLevel::DEBUG, "./");
-	// 测试日志是否能够使用
-	Log::debug("我在这里遇到了一些问题", __FILE__, __LINE__);
-
+	// 主进程
+	
     return 0;
 }

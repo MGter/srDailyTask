@@ -1,12 +1,43 @@
 #include "srDailyTask.h"
 
 
-class srDailyTask{
-public:
-    // 外部函数
-private:
-    // 内部函数
-private:
-    // 内部参数
-    bool m_started;
-};
+srDailyTask::srDailyTask(){
+    m_started = false;
+}
+
+
+srDailyTask::~srDailyTask(){
+    ;
+}
+
+srDailyTask* srDailyTask::getInstance(){
+    if(!g_srDailyTask){
+        g_srDailyTask = new srDailyTask;
+    }
+    return g_srDailyTask;
+}
+
+
+bool srDailyTask::start(){
+    ;
+}
+
+bool srDailyTask::stop(){
+    ;
+}
+
+bool srDailyTask::addTask(){
+    ;
+}
+
+bool srDailyTask::delTask(){
+    ;
+}
+
+bool srDailyTask::findTask(){
+    ;
+}
+
+bool srDailyTask::changeTask(){
+    ;
+}
