@@ -28,9 +28,4 @@ void createDirectory(const std::string& path);
 
 
 
-
-
-
-
-
 #endif  //__COMMON_TOOL_H_

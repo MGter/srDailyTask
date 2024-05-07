@@ -73,20 +73,20 @@ int main(int argc, char* argv[]){
 	std::string conf_path = "./conf/product.conf";
 	initConf(conf_path);
 
-	// 初始化日志，设置日志级别
-	Log::initLogLevel();
+
+	// 设置日志相关内容
 	auto iter = g_configMap.find("LogLevel");
 	if(iter == g_configMap.end()){
 		std::cout << "Failed to load the loglevel" << std::endl;
-		Log::debug("Failed to load the loglevel!", __FILE__, __LINE__);
 	}
 	else{
 		std::cout << "Loglevel is " << g_configMap["LogLevel"] << std::endl;
 		std::string message = "LogLevel is "  + g_configMap["LogLevel"] ;
-		Log::debug(message, __FILE__, __LINE__);
 	}
-	
 
+	Log::init(LogLevel::DEBUG, "./");
+	// 测试日志是否能够使用
+	Log::debug("我在这里遇到了一些问题", __FILE__, __LINE__);
 
     return 0;
 }
