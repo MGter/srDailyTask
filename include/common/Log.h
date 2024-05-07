@@ -9,9 +9,9 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
-#include "Tool.h"
+#include <cstdarg>
 
-// 这里就不要引用什么全局变量了init
+extern std::map<std::string, std::string> g_configMap;
 
 enum LogLevel {
     DEBUG,
@@ -22,24 +22,21 @@ enum LogLevel {
 
 class Log {
 public:
-    static void init(const LogLevel& log_level, const std::string& log_path);
-    static void setLogLevel(const LogLevel& level);
-    static void setLogPath(const std::string& logPath);
-    static void debug(const std::string& message, const char* file, int line);
-    static void info(const std::string& message, const char* file, int line);
-    static void warning(const std::string& message, const char* file, int line);
-    static void error(const std::string& message, const char* file, int line);
+    static void initLogLevel();
+    static void setLogLevel(LogLevel level);
+    static void setLogPath(std::string logPath);
+    static void debug(const char* file, const int line, const char* message, ...);
+    static void info(const char* file, const int line, const char* message, ...);
+    static void warning(const char* file, const int line, const char* message, ...);
+    static void error(const char* file, const int line, const char* message, ...);
 private:
-    bool static createLogFile(const std::string& logDir, const std::string& logFilename);
-    bool static closeLogFile();
-    void static writeLog(const std::string& logLine);
+    static bool createLogFile();
+    static void closeLogFile();
+    static void writeLog(const std::string& logLine);
 private:
     static LogLevel        m_logLevel;
     static std::string     m_logPath;
     static std::ofstream   m_logFile;
-    // 区分是否因时间更新而导致输出的log文件位置变化
-    static std::string     m_lastLogDir;
-    static std::string     m_lastLogFileName;
 };
 
 
