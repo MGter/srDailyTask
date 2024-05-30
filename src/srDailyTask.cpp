@@ -17,8 +17,13 @@ srDailyTask* srDailyTask::getInstance(){
     return g_srDailyTask;
 }
 
+bool srDailyTask::init(){
+    ;
+    return true;
+}
 
-bool srDailyTask::start(){
+
+srDailyTask::Status srDailyTask::start(){
     ;
 }
 

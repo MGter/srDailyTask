@@ -12,6 +12,8 @@
 #include "Log.h"
 #include "Tool.h"
 
+#include "srDailyTask.h"
+
 // 设置全局变量g_configMap，储存config.conf,设置日志级别等内容
 std::map<std::string, std::string> g_configMap;
 std::string g_logPath;
@@ -52,7 +54,7 @@ static void WidebrightSegvHandler(int signum)
 
 
 int main(int argc, char* argv[]){
-	Log::info(__FILE__, __LINE__, "Starting srDailyTask...");
+	Log::info(__FILE__, __LINE__, "srDailyTask starts");
 
 	signal(SIGINT, SigIntHandler);
 	signal(SIGSEGV, WidebrightSegvHandler);
@@ -69,7 +71,26 @@ int main(int argc, char* argv[]){
 		printf("block sigpipe error\n");
 	}
 
-	// 主进程
+	if(!srDailyTask::getInstance()->init()){
+		Log::error(__FILE__, __LINE__, "Failed to start the task");
+	}
+	auto status = srDailyTask::getInstance()->start();
 	
+	switch (status)
+	{
+	case srDailyTask::error:
+		Log::error(__FILE__, __LINE__, "srDailyTask exited with errors");
+		break;
+	case srDailyTask::stop:
+		Log::info(__FILE__, __LINE__, "srDailyTask stoped normally");
+		break;
+	case srDailyTask::unknown:
+		Log::warning(__FILE__, __LINE__, "srDailyTask exited with known status");
+		break;
+	default:
+		break;
+	}
+
+	Log::info(__FILE__, __LINE__, "srDailyTask stopped!");
     return 0;
 }

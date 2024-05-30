@@ -6,16 +6,16 @@
 class srDailyTask{
 public:
     enum Status{
-        init,
         running,
         stop,
-        err,
+        error,
         unknown
     };
 
     srDailyTask();
     ~srDailyTask();
-    bool start();
+    bool init();
+    Status start();
     bool stop();
     bool addTask();
     bool delTask();
@@ -25,9 +25,8 @@ public:
 
 private:
     Status ThreadRunning();
-
-public:
     static srDailyTask* g_srDailyTask;
+
 
 private:
     bool m_started;
