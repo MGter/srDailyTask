@@ -32,6 +32,7 @@ func NewRouter() *http.ServeMux {
 	mux.HandleFunc("/api/users", methodHandler("GET", userHandler.List))
 
 	// Task routes
+	mux.HandleFunc("/api/task/today/", methodHandler("GET", taskHandler.GetTodayTasks))
 	mux.HandleFunc("/api/task", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "POST":

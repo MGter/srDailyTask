@@ -98,6 +98,41 @@ func (s *TaskService) Delete(id uint64) error {
 	return s.repo.Delete(id)
 }
 
+func (s *TaskService) GetActiveTasks() ([]*model.Task, error) {
+	return s.repo.FindActiveTasks()
+}
+
+// ShouldCheckinToday 判断任务今天是否需要打卡
+func (s *TaskService) ShouldCheckinToday(task *model.Task) bool {
+	if task.IsExpired {
+		return false
+	}
+
+	now := time.Now()
+	weekday := now.Weekday()
+
+	switch task.CircleMode {
+	case model.CircleOnce:
+		// 单次任务：只要没过期就需要打卡（但打卡一次后就过期了）
+		return true
+	case model.CircleWeekly:
+		// 每周：每周一打卡
+		return weekday == time.Monday
+	case model.CircleWorkday:
+		// 工作日：周一到周五
+		return weekday >= time.Monday && weekday <= time.Friday
+	case model.CircleWeekend:
+		// 周末：周六周日
+		return weekday == time.Saturday || weekday == time.Sunday
+	case model.CircleCustom:
+		// 自定义：默认每天都需要（后续可扩展）
+		return true
+	default:
+		return false
+	}
+}
+
+// CheckIn 打卡，单次任务打卡后标记为过期
 func (s *TaskService) CheckIn(taskID, userID uint64) (*model.CheckIn, error) {
 	task, err := s.repo.FindByID(taskID)
 	if err != nil {
@@ -108,6 +143,11 @@ func (s *TaskService) CheckIn(taskID, userID uint64) (*model.CheckIn, error) {
 	}
 	if task.UserID != userID {
 		return nil, errors.New("task does not belong to user")
+	}
+
+	// 检查今天是否需要打卡
+	if !s.ShouldCheckinToday(task) {
+		return nil, errors.New("today is not a check-in day for this task")
 	}
 
 	existing, err := s.checkinSvc.GetTodayByTaskID(taskID)
@@ -123,6 +163,13 @@ func (s *TaskService) CheckIn(taskID, userID uint64) (*model.CheckIn, error) {
 		return nil, err
 	}
 
+	// 单次任务打卡后标记为过期
+	if task.CircleMode == model.CircleOnce {
+		task.IsExpired = true
+		task.UpdatedAt = time.Now()
+		s.repo.Update(task)
+	}
+
 	user, err := s.userSvc.GetByID(userID)
 	if err != nil {
 		return nil, err
@@ -133,8 +180,4 @@ func (s *TaskService) CheckIn(taskID, userID uint64) (*model.CheckIn, error) {
 	}
 
 	return checkin, nil
-}
-
-func (s *TaskService) GetActiveTasks() ([]*model.Task, error) {
-	return s.repo.FindActiveTasks()
 }

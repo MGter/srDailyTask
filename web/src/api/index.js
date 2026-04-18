@@ -21,6 +21,7 @@ export const taskApi = {
   create: (data) => api.post('/task', data),
   getTask: (id) => api.get(`/task/${id}`),
   getUserTasks: (userId, params) => api.get(`/task/user/${userId}`, { params }),
+  getTodayTasks: (userId) => api.get(`/task/today/${userId}`),
   update: (id, data) => api.put(`/task/${id}`, data),
   delete: (id) => api.delete(`/task/${id}`)
 }

@@ -73,7 +73,60 @@ func (h *TaskHandler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, tasks)
+	// 添加 should_checkin_today 字段
+	result := make([]map[string]interface{}, len(tasks))
+	for i, task := range tasks {
+		result[i] = map[string]interface{}{
+			"id":            task.ID,
+			"user_id":       task.UserID,
+			"title":         task.Title,
+			"description":   task.Description,
+			"circle_mode":   task.CircleMode,
+			"level":         task.Level,
+			"points":        task.Points,
+			"created_at":    task.CreatedAt,
+			"updated_at":    task.UpdatedAt,
+			"is_expired":    task.IsExpired,
+			"should_checkin_today": h.svc.ShouldCheckinToday(task),
+		}
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *TaskHandler) GetTodayTasks(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromPath(r, "/api/task/today/")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	tasks, err := h.svc.GetByUserID(userID, 50, 0)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// 只返回今天需要打卡且未过期的任务
+	todayTasks := []map[string]interface{}{}
+	for _, task := range tasks {
+		if !task.IsExpired && h.svc.ShouldCheckinToday(task) {
+			todayTasks = append(todayTasks, map[string]interface{}{
+				"id":            task.ID,
+				"user_id":       task.UserID,
+				"title":         task.Title,
+				"description":   task.Description,
+				"circle_mode":   task.CircleMode,
+				"level":         task.Level,
+				"points":        task.Points,
+				"created_at":    task.CreatedAt,
+				"updated_at":    task.UpdatedAt,
+				"is_expired":    task.IsExpired,
+			})
+		}
+	}
+
+	writeJSON(w, http.StatusOK, todayTasks)
 }
 
 func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
