@@ -62,7 +62,9 @@ func NewRouter() *http.ServeMux {
 	mux.HandleFunc("/api/checkin/", methodHandler("POST", taskHandler.CheckIn))
 
 	// Wallet routes
+	mux.HandleFunc("/api/wallet/add", methodHandler("POST", walletHandler.AddRecord))
 	mux.HandleFunc("/api/wallet/spend", methodHandler("POST", walletHandler.Spend))
+	mux.HandleFunc("/api/wallet/delete/", methodHandler("DELETE", walletHandler.Delete))
 	mux.HandleFunc("/api/wallet/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/balance") {
 			if r.Method == "GET" {

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"daily_task/internal/model"
 	"daily_task/internal/service"
@@ -66,4 +67,44 @@ func (h *WalletHandler) Spend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, wallet)
+}
+
+func (h *WalletHandler) AddRecord(w http.ResponseWriter, r *http.Request) {
+	var req model.AddRecordRequest
+	if err := readBody(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	wallet, err := h.svc.AddRecord(&req)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, wallet)
+}
+
+func (h *WalletHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	// 从路径获取 id
+	idStr := r.PathValue("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid record id")
+		return
+	}
+
+	var req model.DeleteRecordRequest
+	if err := readBody(r, &req); err != nil {
+		req.ID = id
+		req.UserID = 1 // 默认用户
+	}
+	req.ID = id
+
+	if err := h.svc.Delete(req.ID, req.UserID); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "record deleted"})
 }

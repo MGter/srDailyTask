@@ -21,11 +21,12 @@ func NewCheckInService() *CheckInService {
 }
 
 func (s *CheckInService) Create(taskID, userID uint64, points int) (*model.CheckIn, error) {
+	now := time.Now()
 	checkin := &model.CheckIn{
 		TaskID:    taskID,
 		UserID:    userID,
 		Points:    points,
-		CheckTime: time.Now(),
+		CheckTime: now,
 	}
 
 	if err := s.repo.Create(checkin); err != nil {
@@ -38,13 +39,14 @@ func (s *CheckInService) Create(taskID, userID uint64, points int) (*model.Check
 		Type:        model.WalletEarn,
 		Amount:      points,
 		Description: "Check-in reward",
-		CreatedAt:   time.Now(),
+		CreatedAt:   now,
+		RecordTime:  now,
 	}
 	if err := s.walletSvc.Create(wallet); err != nil {
-		logger.Error("checkin_service.go", 36, "Failed to create wallet record: %v", err)
+		logger.Error("checkin_service.go", 38, "Failed to create wallet record: %v", err)
 	}
 
-	logger.Info("checkin_service.go", 39, "User %d checked in task %d, earned %d points", userID, taskID, points)
+	logger.Info("checkin_service.go", 41, "User %d checked in task %d, earned %d points", userID, taskID, points)
 	return checkin, nil
 }
 

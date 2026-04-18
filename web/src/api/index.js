@@ -36,7 +36,9 @@ export const checkinApi = {
 export const walletApi = {
   getWallet: (userId, params) => api.get(`/wallet/${userId}`, { params }),
   getBalance: (userId) => api.get(`/wallet/${userId}/balance`),
-  spend: (data) => api.post('/wallet/spend', data)
+  spend: (data) => api.post('/wallet/spend', data),
+  addRecord: (data) => api.post('/wallet/add', data),
+  delete: (id, userId) => api.delete(`/wallet/delete/${id}`, { data: { user_id: userId } })
 }
 
 // 积分历史
