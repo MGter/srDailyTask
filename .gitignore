@@ -1,11 +1,38 @@
-*.d
-*.obj
-*.o
-*.tlog
-*.lastbuildstate
-*.idb
-*.pdb
-*~
-*.swp
+# Binaries
+daily_task
 *.exe
-*.ts
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output
+log/
+*.log
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
+
+# Config with sensitive data (use config.yaml.example instead)
+config/config.yaml
+
+# Temporary files
+*.tmp
+*.bak
+tmp/
