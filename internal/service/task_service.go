@@ -29,12 +29,16 @@ func (s *TaskService) Create(req *model.CreateTaskRequest) (*model.Task, error) 
 	if req.Points <= 0 {
 		req.Points = 10
 	}
+	if req.Level < 1 || req.Level > 3 {
+		req.Level = model.LevelLow
+	}
 
 	task := &model.Task{
 		UserID:      req.UserID,
 		Title:       req.Title,
 		Description: req.Description,
 		CircleMode:  req.CircleMode,
+		Level:       req.Level,
 		Points:      req.Points,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -73,6 +77,9 @@ func (s *TaskService) Update(id uint64, req *model.UpdateTaskRequest) (*model.Ta
 	}
 	if req.CircleMode != "" {
 		task.CircleMode = req.CircleMode
+	}
+	if req.Level >= 1 && req.Level <= 3 {
+		task.Level = req.Level
 	}
 	if req.Points > 0 {
 		task.Points = req.Points

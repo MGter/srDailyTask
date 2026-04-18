@@ -12,12 +12,21 @@ const (
 	CircleCustom  CircleMode = "custom"
 )
 
+type TaskLevel int
+
+const (
+	LevelLow    TaskLevel = 1 // 低风险 - 绿色
+	LevelMedium TaskLevel = 2 // 中风险 - 黄色
+	LevelHigh   TaskLevel = 3 // 高风险 - 红色
+)
+
 type Task struct {
 	ID          uint64     `json:"id"`
 	UserID      uint64     `json:"user_id"`
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	CircleMode  CircleMode `json:"circle_mode"`
+	Level       TaskLevel  `json:"level"`
 	Points      int        `json:"points"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
@@ -29,6 +38,7 @@ type CreateTaskRequest struct {
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	CircleMode  CircleMode `json:"circle_mode"`
+	Level       TaskLevel  `json:"level"`
 	Points      int        `json:"points"`
 }
 
@@ -36,6 +46,7 @@ type UpdateTaskRequest struct {
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	CircleMode  CircleMode `json:"circle_mode"`
+	Level       TaskLevel  `json:"level"`
 	Points      int        `json:"points"`
 	IsExpired   bool       `json:"is_expired"`
 }
