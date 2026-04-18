@@ -60,7 +60,7 @@ const formatDate = (dateStr) => {
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
 }
 
-const userId = localStorage.getItem('userId')
+const userId = parseInt(localStorage.getItem('userId'))
 
 const loadBalance = async () => {
   try {

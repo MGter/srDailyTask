@@ -76,7 +76,7 @@ const circleModeText = (mode) => {
 }
 
 const loadUser = async () => {
-  const userId = localStorage.getItem('userId')
+  const userId = parseInt(localStorage.getItem('userId'))
   if (!userId) {
     router.push('/login')
     return
@@ -90,7 +90,7 @@ const loadUser = async () => {
 }
 
 const loadTasks = async () => {
-  const userId = localStorage.getItem('userId')
+  const userId = parseInt(localStorage.getItem('userId'))
   loading.value = true
   try {
     const res = await taskApi.getUserTasks(userId, { limit: 20, offset: 0 })
@@ -104,7 +104,7 @@ const loadTasks = async () => {
 
 const createTask = async () => {
   creating.value = true
-  const userId = localStorage.getItem('userId')
+  const userId = parseInt(localStorage.getItem('userId'))
   try {
     const res = await taskApi.create({
       user_id: userId,
@@ -122,7 +122,7 @@ const createTask = async () => {
 }
 
 const checkin = async (taskId) => {
-  const userId = localStorage.getItem('userId')
+  const userId = parseInt(localStorage.getItem('userId'))
   try {
     await checkinApi.checkin(taskId, { user_id: userId })
     // 更新任务状态
