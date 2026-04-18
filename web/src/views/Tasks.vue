@@ -29,10 +29,10 @@
             <option value="weekend">周末</option>
             <option value="custom">每天</option>
           </select>
-          <select v-model="newTask.level">
-            <option value="1">● 低</option>
-            <option value="2">● 中</option>
-            <option value="3">● 高</option>
+          <select v-model.number="newTask.level">
+            <option :value="1">● 低</option>
+            <option :value="2">● 中</option>
+            <option :value="3">● 高</option>
           </select>
           <input v-model.number="newTask.points" type="number" placeholder="积分" min="1" />
           <button type="submit" :disabled="creating">{{ creating ? '创建...' : '创建' }}</button>
@@ -263,8 +263,8 @@ const createTask = async () => {
       user_id: userId,
       title: newTask.value.title,
       circle_mode: newTask.value.circle_mode,
-      level: newTask.value.level,
-      points: newTask.value.points || 10
+      level: Number(newTask.value.level),
+      points: Number(newTask.value.points) || 10
     })
     const checkedRes = await checkinApi.getTodayChecked(userId)
     const checkedIds = checkedRes.data || []
