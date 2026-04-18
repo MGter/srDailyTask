@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"daily_task/internal/logger"
 	"daily_task/internal/model"
+	"time"
 )
 
 type WalletRepository struct{}
@@ -94,4 +96,121 @@ func (r *WalletRepository) List(limit, offset int) ([]*model.Wallet, error) {
 		wallets = append(wallets, w)
 	}
 	return wallets, nil
+}
+
+// DailyStats 每日积分统计
+type DailyStats struct {
+	Date    string `json:"date"`
+	Earn    int    `json:"earn"`
+	Spend   int    `json:"spend"`
+	Balance int    `json:"balance"`
+}
+
+// GetDailyStats 获取最近 N 天的积分统计
+// 包含 wallet 表和 checkins 表的数据
+func (r *WalletRepository) GetDailyStats(userID uint64, days int) ([]*DailyStats, error) {
+	// 生成最近 N 天的日期列表
+	stats := []*DailyStats{}
+	now := time.Now()
+
+	// 查询 checkins 表按日期聚合
+	checkinQuery := `
+		SELECT DATE(check_time) as date, SUM(points) as earn
+		FROM checkins WHERE user_id = ?
+		AND check_time >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+		GROUP BY DATE(check_time)`
+	checkinRows, err := DB.Query(checkinQuery, userID, days)
+	if err != nil {
+		logger.Error("wallet_repo.go", 130, "Checkin query error: %v", err)
+		return nil, err
+	}
+	logger.Info("wallet_repo.go", 133, "Checkin query executed for user %d, days %d", userID, days)
+
+	walletMap := map[string]*DailyStats{}
+	for checkinRows.Next() {
+		var dateStr string
+		var earn int
+		err := checkinRows.Scan(&dateStr, &earn)
+		if err != nil {
+			checkinRows.Close()
+			return nil, err
+		}
+		// 解析日期字符串，可能是 time.Time 格式或字符串
+		var date time.Time
+		if len(dateStr) > 10 {
+			// 可能是 time.Time 格式的字符串
+			date, err = time.Parse("2006-01-02T15:04:05Z07:00", dateStr)
+			if err != nil {
+				// 尝试其他格式
+				date, err = time.Parse("2006-01-02", dateStr[:10])
+				if err != nil {
+					checkinRows.Close()
+					return nil, err
+				}
+			}
+			dateStr = date.Format("2006-01-02")
+		}
+		logger.Info("wallet_repo.go", 165, "Found checkin: date=%s, earn=%d", dateStr, earn)
+		walletMap[dateStr] = &DailyStats{Date: dateStr, Earn: earn, Spend: 0}
+	}
+	checkinRows.Close()
+	logger.Info("wallet_repo.go", 149, "Total checkin records: %d", len(walletMap))
+
+	// 查询 wallet 表按日期聚合
+	walletQuery := `
+		SELECT DATE(record_time) as date,
+		       SUM(CASE WHEN type = 'earn' THEN amount ELSE 0 END) as earn,
+		       SUM(CASE WHEN type = 'spend' THEN amount ELSE 0 END) as spend
+		FROM wallet WHERE user_id = ?
+		AND record_time >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+		GROUP BY DATE(record_time)`
+	walletRows, err := DB.Query(walletQuery, userID, days)
+	if err != nil {
+		return nil, err
+	}
+	defer walletRows.Close()
+
+	for walletRows.Next() {
+		s := &DailyStats{}
+		err := walletRows.Scan(&s.Date, &s.Earn, &s.Spend)
+		if err != nil {
+			return nil, err
+		}
+		if walletMap[s.Date] != nil {
+			walletMap[s.Date].Earn += s.Earn
+			walletMap[s.Date].Spend += s.Spend
+		} else {
+			walletMap[s.Date] = s
+		}
+	}
+
+	// 构建日期列表，按日期正序
+	dateList := []string{}
+	for i := days - 1; i >= 0; i-- {
+		d := now.AddDate(0, 0, -i).Format("2006-01-02")
+		dateList = append(dateList, d)
+	}
+
+	// 计算每日累计余额（从最早日期开始累加）
+	balanceMap := map[string]int{}
+	cumulative := 0
+	for _, d := range dateList {
+		s := walletMap[d]
+		if s != nil {
+			cumulative += s.Earn - s.Spend
+		}
+		balanceMap[d] = cumulative
+	}
+
+	// 构建最终结果（按日期正序）
+	for _, d := range dateList {
+		s := walletMap[d]
+		if s == nil {
+			s = &DailyStats{Date: d, Earn: 0, Spend: 0}
+		}
+		s.Balance = balanceMap[d]
+		stats = append(stats, s)
+	}
+
+	return stats, nil
 }

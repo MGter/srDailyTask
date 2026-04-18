@@ -44,7 +44,8 @@ export const walletApi = {
 
 // 积分历史
 export const pointsApi = {
-  getHistory: (userId, params) => api.get(`/points/${userId}`, { params })
+  getHistory: (userId, params) => api.get(`/points/${userId}`, { params }),
+  getDailyStats: (userId, params) => api.get(`/points/daily/${userId}`, { params })
 }
 
 export default api

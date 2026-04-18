@@ -71,3 +71,24 @@ func (h *PointHandler) GetTodayChecked(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, taskIDs)
 }
+
+func (h *PointHandler) GetDailyStats(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromPath(r, "/api/points/daily/")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	days := getQueryParam(r, "days", 7)
+	if days < 1 || days > 360 {
+		days = 7
+	}
+
+	stats, err := h.walletSvc.GetDailyStats(userID, days)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}

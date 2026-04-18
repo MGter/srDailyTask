@@ -163,3 +163,7 @@ func (s *WalletService) Delete(id uint64, userID uint64) error {
 func (s *WalletService) List(limit, offset int) ([]*model.Wallet, error) {
 	return s.repo.List(limit, offset)
 }
+
+func (s *WalletService) GetDailyStats(userID uint64, days int) ([]*repository.DailyStats, error) {
+	return s.repo.GetDailyStats(userID, days)
+}

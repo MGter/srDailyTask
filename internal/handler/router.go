@@ -84,6 +84,7 @@ func NewRouter() *http.ServeMux {
 
 	// Point routes
 	mux.HandleFunc("/api/points/", methodHandler("GET", pointHandler.GetPointHistory))
+	mux.HandleFunc("/api/points/daily/", methodHandler("GET", pointHandler.GetDailyStats))
 
 	logger.Info("router.go", 56, "Router initialized")
 	return mux

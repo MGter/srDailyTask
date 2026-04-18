@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 
 	"daily_task/internal/model"
 	"daily_task/internal/service"
@@ -87,8 +86,7 @@ func (h *WalletHandler) AddRecord(w http.ResponseWriter, r *http.Request) {
 
 func (h *WalletHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	// 从路径获取 id
-	idStr := r.PathValue("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
+	id, err := getURLParamFromPath(r.URL.Path, "/api/wallet/delete/")
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid record id")
 		return

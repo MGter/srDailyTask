@@ -1,11 +1,11 @@
 <template>
-  <div class="tasks-container">
+  <div class="dashboard-container">
     <header>
       <h1>每日打卡</h1>
       <div class="user-info">
         <span>{{ user?.username }}</span>
         <span class="points">积分: {{ user?.points || 0 }}</span>
-        <router-link to="/points" class="wallet-btn">钱包</router-link>
+        <button class="logout-btn" @click="logout">退出</button>
       </div>
     </header>
 
@@ -13,41 +13,44 @@
       <p>今天是 {{ todayText }}，以下任务需要打卡</p>
     </div>
 
-    <div class="create-task">
-      <h3>创建新任务</h3>
-      <form @submit.prevent="createTask">
-        <input v-model="newTask.title" placeholder="任务标题" required />
-        <select v-model="newTask.circle_mode">
-          <option value="once">单次（打卡一次后结束）</option>
-          <option value="weekly">每周（每周一打卡）</option>
-          <option value="workday">工作日（周一至周五）</option>
-          <option value="weekend">周末（周六周日）</option>
-          <option value="custom">自定义（每天）</option>
-        </select>
-        <select v-model="newTask.level">
-          <option value="1">低风险</option>
-          <option value="2">中风险</option>
-          <option value="3">高风险</option>
-        </select>
-        <input v-model.number="newTask.points" type="number" placeholder="积分" min="1" />
-        <button type="submit" :disabled="creating">{{ creating ? '创建中...' : '创建' }}</button>
-      </form>
-    </div>
+    <!-- 打卡任务区域 -->
+    <div class="section checkin-section">
+      <div class="section-header">
+        <h2>今日打卡任务</h2>
+      </div>
 
-    <div class="task-list">
-      <h3>今日需打卡任务</h3>
-      <div v-if="loading" class="loading">加载中...</div>
+      <div class="create-task">
+        <form @submit.prevent="createTask">
+          <input v-model="newTask.title" placeholder="任务标题" required />
+          <select v-model="newTask.circle_mode">
+            <option value="once">单次</option>
+            <option value="weekly">每周一</option>
+            <option value="workday">工作日</option>
+            <option value="weekend">周末</option>
+            <option value="custom">每天</option>
+          </select>
+          <select v-model="newTask.level">
+            <option value="1">● 低</option>
+            <option value="2">● 中</option>
+            <option value="3">● 高</option>
+          </select>
+          <input v-model.number="newTask.points" type="number" placeholder="积分" min="1" />
+          <button type="submit" :disabled="creating">{{ creating ? '创建...' : '创建' }}</button>
+        </form>
+      </div>
+
+      <div v-if="loadingTasks" class="loading">加载中...</div>
       <div v-else-if="todayTasks.length === 0" class="empty">今天没有需要打卡的任务</div>
       <div v-else class="tasks">
         <div class="task-item" v-for="task in todayTasks" :key="task.id" :class="'level-' + task.level">
           <div class="task-info">
             <h4>
-              <span class="level-badge" :class="'badge-' + task.level">{{ levelText(task.level) }}</span>
+              <span class="level-dot" :class="'dot-' + task.level"></span>
               {{ task.title }}
             </h4>
             <p class="task-meta">
               <span class="mode">{{ circleModeText(task.circle_mode) }}</span>
-              <span class="points">+{{ task.points }}积分</span>
+              <span class="task-points">+{{ task.points }}</span>
             </p>
           </div>
           <div class="task-actions">
@@ -60,18 +63,79 @@
       </div>
     </div>
 
-    <div class="task-list other-tasks" v-if="otherTasks.length > 0">
-      <h3>其他任务（今天不需要打卡）</h3>
+    <!-- 积分钱包区域 -->
+    <div class="section wallet-section">
+      <div class="section-header">
+        <h2>积分钱包</h2>
+      </div>
+
+      <div class="action-form">
+        <form @submit.prevent="addRecord">
+          <select v-model="addForm.type">
+            <option value="earn">收入</option>
+            <option value="spend">支出</option>
+          </select>
+          <input v-model.number="addForm.amount" type="number" placeholder="金额" min="1" required />
+          <input v-model="addForm.description" placeholder="描述" required />
+          <input v-model="addForm.record_time" type="datetime-local" required />
+          <button type="submit" :disabled="adding">{{ adding ? '添加...' : '添加' }}</button>
+        </form>
+      </div>
+
+      <div v-if="loadingHistory" class="loading">加载中...</div>
+      <div v-else-if="history.length === 0" class="empty">暂无记录</div>
+      <div v-else class="history-list">
+        <div class="history-item" v-for="item in history" :key="item.id">
+          <div class="item-info">
+            <span :class="['type', item.type]">{{ item.type === 'earn' ? '收入' : '支出' }}</span>
+            <span class="desc">{{ item.description }}</span>
+            <span class="time">{{ formatDate(item.record_time) }}</span>
+          </div>
+          <div class="item-right">
+            <span :class="['amount', item.type]">
+              {{ item.type === 'earn' ? '+' : '-' }}{{ item.amount }}
+            </span>
+            <button class="delete-btn small" @click="deleteRecord(item.id)">删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统计图表区域 -->
+    <div class="section chart-section">
+      <div class="section-header">
+        <h2>积分统计</h2>
+        <select v-model="chartDays" @change="loadDailyStats" class="days-select">
+          <option value="7">7天</option>
+          <option value="14">14天</option>
+          <option value="30">30天</option>
+          <option value="180">180天</option>
+          <option value="360">360天</option>
+        </select>
+      </div>
+
+      <div v-if="loadingStats" class="loading">加载中...</div>
+      <div v-else class="chart-wrapper">
+        <canvas ref="chartCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- 其他任务（今天不需要打卡） -->
+    <div class="section other-tasks-section" v-if="otherTasks.length > 0">
+      <div class="section-header">
+        <h2>其他任务</h2>
+        <span class="sub-title">今天不需要打卡</span>
+      </div>
       <div class="tasks">
         <div class="task-item inactive" v-for="task in otherTasks" :key="task.id" :class="'level-' + task.level">
           <div class="task-info">
             <h4>
-              <span class="level-badge" :class="'badge-' + task.level">{{ levelText(task.level) }}</span>
+              <span class="level-dot" :class="'dot-' + task.level"></span>
               {{ task.title }}
             </h4>
             <p class="task-meta">
               <span class="mode">{{ circleModeText(task.circle_mode) }}</span>
-              <span class="points">+{{ task.points }}积分</span>
+              <span class="task-points">+{{ task.points }}</span>
             </p>
           </div>
           <div class="task-actions">
@@ -84,21 +148,46 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { taskApi, checkinApi, userApi } from '../api'
+import { taskApi, checkinApi, userApi, walletApi, pointsApi } from '../api'
+import { Chart, registerables } from 'chart.js'
+
+Chart.register(...registerables)
 
 const router = useRouter()
 const user = ref(null)
 const tasks = ref([])
-const loading = ref(true)
+const history = ref([])
+const dailyStats = ref([])
+const loadingTasks = ref(true)
+const loadingHistory = ref(false)
+const loadingStats = ref(false)
 const creating = ref(false)
+const adding = ref(false)
+const chartDays = ref(7)
+const chartCanvas = ref(null)
+let chartInstance = null
+
+const userId = parseInt(localStorage.getItem('userId'))
 
 const newTask = ref({
   title: '',
   circle_mode: 'workday',
   level: 1,
   points: 10
+})
+
+const getDefaultTime = () => {
+  const now = new Date()
+  return now.toISOString().slice(0, 16)
+}
+
+const addForm = ref({
+  type: 'earn',
+  amount: 10,
+  description: '',
+  record_time: getDefaultTime()
 })
 
 const todayText = computed(() => {
@@ -126,13 +215,18 @@ const circleModeText = (mode) => {
   return texts[mode] || mode
 }
 
-const levelText = (level) => {
-  const texts = { 1: '低', 2: '中', 3: '高' }
-  return texts[level] || '低'
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+const logout = () => {
+  localStorage.removeItem('userId')
+  router.push('/login')
 }
 
 const loadUser = async () => {
-  const userId = parseInt(localStorage.getItem('userId'))
   if (!userId) {
     router.push('/login')
     return
@@ -146,8 +240,7 @@ const loadUser = async () => {
 }
 
 const loadTasks = async () => {
-  const userId = parseInt(localStorage.getItem('userId'))
-  loading.value = true
+  loadingTasks.value = true
   try {
     const res = await taskApi.getUserTasks(userId, { limit: 50, offset: 0 })
     const checkedRes = await checkinApi.getTodayChecked(userId)
@@ -159,13 +252,12 @@ const loadTasks = async () => {
   } catch (e) {
     console.error('加载任务失败', e)
   } finally {
-    loading.value = false
+    loadingTasks.value = false
   }
 }
 
 const createTask = async () => {
   creating.value = true
-  const userId = parseInt(localStorage.getItem('userId'))
   try {
     const res = await taskApi.create({
       user_id: userId,
@@ -174,7 +266,6 @@ const createTask = async () => {
       level: newTask.value.level,
       points: newTask.value.points || 10
     })
-    // 新创建的任务，判断今天是否需要打卡
     const checkedRes = await checkinApi.getTodayChecked(userId)
     const checkedIds = checkedRes.data || []
     tasks.value.unshift({
@@ -200,35 +291,164 @@ const deleteTask = async (taskId) => {
 }
 
 const checkin = async (taskId) => {
-  const userId = parseInt(localStorage.getItem('userId'))
   try {
     await checkinApi.checkin(taskId, { user_id: userId })
     const task = tasks.value.find(t => t.id === taskId)
     if (task) task.checked = true
-    // 单次任务打卡后标记为过期
     if (task && task.circle_mode === 'once') {
       task.is_expired = true
     }
     const res = await userApi.getUser(userId)
     user.value = res.data
     alert('打卡成功！获得 ' + task.points + ' 积分')
+    // 刷新积分历史和统计
+    await loadHistory()
+    await loadDailyStats()
   } catch (e) {
     alert('打卡失败：' + (e.response?.data?.error || '未知错误'))
   }
 }
 
+const loadHistory = async () => {
+  loadingHistory.value = true
+  try {
+    const res = await pointsApi.getHistory(userId, { limit: 30, offset: 0 })
+    history.value = res.data
+  } catch (e) {
+    console.error('加载记录失败', e)
+  } finally {
+    loadingHistory.value = false
+  }
+}
+
+const addRecord = async () => {
+  adding.value = true
+  try {
+    await walletApi.addRecord({
+      user_id: userId,
+      type: addForm.value.type,
+      amount: addForm.value.amount,
+      description: addForm.value.description,
+      record_time: new Date(addForm.value.record_time).toISOString()
+    })
+    const res = await userApi.getUser(userId)
+    user.value = res.data
+    await loadHistory()
+    await loadDailyStats()
+    addForm.value.description = ''
+    addForm.value.record_time = getDefaultTime()
+    alert('添加成功')
+  } catch (e) {
+    alert('添加失败：' + (e.response?.data?.error || '未知错误'))
+  } finally {
+    adding.value = false
+  }
+}
+
+const deleteRecord = async (id) => {
+  if (!confirm('确定删除该记录吗？删除后会相应调整积分余额。')) return
+  try {
+    await walletApi.delete(id, userId)
+    const res = await userApi.getUser(userId)
+    user.value = res.data
+    await loadHistory()
+    await loadDailyStats()
+    alert('删除成功')
+  } catch (e) {
+    alert('删除失败：' + (e.response?.data?.error || '未知错误'))
+  }
+}
+
+const loadDailyStats = async () => {
+  loadingStats.value = true
+  try {
+    const res = await pointsApi.getDailyStats(userId, { days: chartDays.value })
+    dailyStats.value = res.data
+    await nextTick()
+    renderChart()
+  } catch (e) {
+    console.error('加载统计失败', e)
+  } finally {
+    loadingStats.value = false
+  }
+}
+
+const renderChart = () => {
+  if (!chartCanvas.value || dailyStats.value.length === 0) return
+
+  if (chartInstance) {
+    chartInstance.destroy()
+  }
+
+  const ctx = chartCanvas.value.getContext('2d')
+  const labels = dailyStats.value.map(s => s.date.slice(5)) // 只显示月-日
+  const earnData = dailyStats.value.map(s => s.earn)
+  const spendData = dailyStats.value.map(s => s.spend)
+  const balanceData = dailyStats.value.map(s => s.balance)
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '当日积累',
+          data: earnData,
+          borderColor: '#42b883',
+          backgroundColor: 'rgba(66, 184, 131, 0.1)',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: '当日消耗',
+          data: spendData,
+          borderColor: '#f56c6c',
+          backgroundColor: 'rgba(245, 108, 108, 0.1)',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: '累计结余',
+          data: balanceData,
+          borderColor: '#e6a23c',
+          backgroundColor: 'rgba(230, 162, 60, 0.1)',
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  })
+}
+
 onMounted(async () => {
   await loadUser()
   await loadTasks()
+  await loadHistory()
+  await loadDailyStats()
 })
 </script>
 
 <style scoped>
-.tasks-container {
-  max-width: 800px;
+.dashboard-container {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
+
 header {
   display: flex;
   justify-content: space-between;
@@ -237,20 +457,26 @@ header {
   padding-bottom: 20px;
   border-bottom: 1px solid #eee;
 }
-h1 { color: #333; }
+
+h1 { color: #333; margin: 0; }
+
 .user-info {
   display: flex;
   gap: 15px;
   align-items: center;
 }
+
 .points { color: #42b883; font-weight: bold; }
-.wallet-btn {
+
+.logout-btn {
   padding: 8px 16px;
-  background: #42b883;
+  background: #f56c6c;
   color: white;
+  border: none;
   border-radius: 4px;
-  text-decoration: none;
+  cursor: pointer;
 }
+
 .today-info {
   background: #e8f5e9;
   padding: 10px 15px;
@@ -258,25 +484,51 @@ h1 { color: #333; }
   margin-bottom: 20px;
   color: #42b883;
 }
-.create-task {
-  background: #f9f9f9;
+
+.section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
-.create-task h3 { margin-bottom: 15px; }
-.create-task form {
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.sub-title {
+  color: #999;
+  font-size: 14px;
+}
+
+/* 创建任务表单 */
+.create-task form, .action-form form {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  margin-bottom: 15px;
 }
-.create-task input, .create-task select {
+
+.create-task input, .create-task select,
+.action-form input, .action-form select {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
-.create-task input:first-child { flex: 1; min-width: 200px; }
-.create-task button {
+
+.create-task input:first-child { flex: 1; min-width: 150px; }
+.action-form input[placeholder="描述"] { flex: 1; min-width: 120px; }
+
+.create-task button, .action-form button {
   padding: 10px 20px;
   background: #42b883;
   color: white;
@@ -284,69 +536,150 @@ h1 { color: #333; }
   border-radius: 4px;
   cursor: pointer;
 }
-.task-list h3 { margin-bottom: 15px; }
-.other-tasks { margin-top: 30px; }
-.other-tasks h3 { color: #999; }
-.loading, .empty {
-  text-align: center;
-  padding: 40px;
-  color: #666;
+
+.create-task button:disabled, .action-form button:disabled {
+  background: #ccc;
 }
+
+/* 任务列表 */
 .tasks {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
+
 .task-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
-  background: white;
+  padding: 12px 15px;
+  background: #f9f9f9;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   border-left: 4px solid #42b883;
 }
+
 .task-item.inactive {
   opacity: 0.6;
   background: #f5f5f5;
 }
+
 .task-item.level-1 { border-left-color: #42b883; }
 .task-item.level-2 { border-left-color: #e6a23c; }
 .task-item.level-3 { border-left-color: #f56c6c; }
-.task-info h4 { margin: 0 0 5px 0; display: flex; align-items: center; gap: 8px; }
-.level-badge {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
+
+.task-info h4 {
+  margin: 0 0 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.badge-1 { background: #e8f5e9; color: #42b883; }
-.badge-2 { background: #fdf6ec; color: #e6a23c; }
-.badge-3 { background: #fef0f0; color: #f56c6c; }
+
+.level-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-1 { background: #42b883; }
+.dot-2 { background: #e6a23c; }
+.dot-3 { background: #f56c6c; }
+
 .task-meta {
   display: flex;
   gap: 10px;
   color: #666;
   font-size: 14px;
 }
-.task-meta .points { color: #42b883; }
-.task-actions { display: flex; gap: 10px; }
+
+.task-points { color: #42b883; }
+
+.task-actions { display: flex; gap: 8px; }
+
 .delete-btn {
-  padding: 10px 15px;
+  padding: 8px 12px;
   background: #f56c6c;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 12px;
 }
+
+.delete-btn.small { padding: 6px 10px; }
+
 .task-item button:not(.delete-btn) {
-  padding: 10px 20px;
+  padding: 8px 15px;
   background: #42b883;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
+
 .task-item button:disabled { background: #ccc; }
+
+/* 积分历史 */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.item-info {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.type {
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.type.earn { background: #e8f5e9; color: #42b883; }
+.type.spend { background: #ffebee; color: #f56c6c; }
+
+.desc { color: #333; }
+.time { color: #999; font-size: 12px; }
+
+.item-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.amount { font-weight: bold; }
+.amount.earn { color: #42b883; }
+.amount.spend { color: #f56c6c; }
+
+/* 图表 */
+.days-select {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.chart-wrapper {
+  height: 300px;
+  position: relative;
+}
+
+.loading, .empty {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+}
 </style>
