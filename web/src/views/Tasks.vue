@@ -184,7 +184,7 @@ const getDefaultTime = () => {
 }
 
 const addForm = ref({
-  type: 'earn',
+  type: 'spend',
   amount: 10,
   description: '',
   record_time: getDefaultTime()
@@ -300,7 +300,6 @@ const checkin = async (taskId) => {
     }
     const res = await userApi.getUser(userId)
     user.value = res.data
-    alert('打卡成功！获得 ' + task.points + ' 积分')
     // 刷新积分历史和统计
     await loadHistory()
     await loadDailyStats()
@@ -337,7 +336,6 @@ const addRecord = async () => {
     await loadDailyStats()
     addForm.value.description = ''
     addForm.value.record_time = getDefaultTime()
-    alert('添加成功')
   } catch (e) {
     alert('添加失败：' + (e.response?.data?.error || '未知错误'))
   } finally {
@@ -353,7 +351,6 @@ const deleteRecord = async (id) => {
     user.value = res.data
     await loadHistory()
     await loadDailyStats()
-    alert('删除成功')
   } catch (e) {
     alert('删除失败：' + (e.response?.data?.error || '未知错误'))
   }
@@ -387,33 +384,27 @@ const renderChart = () => {
   const balanceData = dailyStats.value.map(s => s.balance)
 
   chartInstance = new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels,
       datasets: [
         {
           label: '当日积累',
           data: earnData,
-          borderColor: '#42b883',
-          backgroundColor: 'rgba(66, 184, 131, 0.1)',
-          fill: false,
-          tension: 0.3
+          backgroundColor: '#42b883',
+          borderRadius: 4
         },
         {
           label: '当日消耗',
           data: spendData,
-          borderColor: '#f56c6c',
-          backgroundColor: 'rgba(245, 108, 108, 0.1)',
-          fill: false,
-          tension: 0.3
+          backgroundColor: '#f56c6c',
+          borderRadius: 4
         },
         {
           label: '累计结余',
           data: balanceData,
-          borderColor: '#e6a23c',
-          backgroundColor: 'rgba(230, 162, 60, 0.1)',
-          fill: true,
-          tension: 0.3
+          backgroundColor: '#e6a23c',
+          borderRadius: 4
         }
       ]
     },
