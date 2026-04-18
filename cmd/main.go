@@ -33,19 +33,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	router := handler.NewRouter()
+	// 使用 SetupServer 托管静态文件
+	distDir := "./web/dist"
+	handler := handler.SetupServer(distDir)
 
 	if config.AppConfig.Scheduler.Enabled {
 		sched := scheduler.NewScheduler()
 		sched.Start()
-		logger.Info("main.go", 35, "Scheduler enabled")
+		logger.Info("main.go", 38, "Scheduler enabled")
 	}
 
 	go func() {
 		addr := fmt.Sprintf(":%d", config.AppConfig.Server.Port)
-		logger.Info("main.go", 39, "Server listening on %s", addr)
-		if err := http.ListenAndServe(addr, router); err != nil {
-			logger.Error("main.go", 41, "Server error: %v", err)
+		logger.Info("main.go", 42, "Server listening on %s", addr)
+		if err := http.ListenAndServe(addr, handler); err != nil {
+			logger.Error("main.go", 44, "Server error: %v", err)
 			os.Exit(1)
 		}
 	}()
@@ -54,8 +56,8 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigChan
 
-	logger.Info("main.go", 48, "Received signal: %v, shutting down", sig)
+	logger.Info("main.go", 51, "Received signal: %v, shutting down", sig)
 	repository.CloseDB()
 	logger.Close()
-	logger.Info("main.go", 51, "daily_task stopped")
+	logger.Info("main.go", 54, "daily_task stopped")
 }
