@@ -57,8 +57,9 @@ func NewRouter() *http.ServeMux {
 	})
 
 	// Check-in routes
-	mux.HandleFunc("/api/checkin/", methodHandler("POST", taskHandler.CheckIn))
+	mux.HandleFunc("/api/checkin/today/", methodHandler("GET", pointHandler.GetTodayChecked))
 	mux.HandleFunc("/api/checkin/user/", methodHandler("GET", pointHandler.GetCheckIns))
+	mux.HandleFunc("/api/checkin/", methodHandler("POST", taskHandler.CheckIn))
 
 	// Wallet routes
 	mux.HandleFunc("/api/wallet/spend", methodHandler("POST", walletHandler.Spend))

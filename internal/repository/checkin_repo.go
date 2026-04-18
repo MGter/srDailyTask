@@ -85,3 +85,25 @@ func (r *CheckInRepository) FindTodayByTaskID(taskID uint64) (*model.CheckIn, er
 	}
 	return c, nil
 }
+
+// FindTodayCheckedTaskIDs 返回用户今天已打卡的任务ID列表
+func (r *CheckInRepository) FindTodayCheckedTaskIDs(userID uint64) ([]uint64, error) {
+	today := time.Now().Format("2006-01-02")
+	query := `SELECT DISTINCT task_id FROM checkins WHERE user_id = ? AND DATE(check_time) = ?`
+	rows, err := DB.Query(query, userID, today)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	taskIDs := []uint64{}
+	for rows.Next() {
+		var taskID uint64
+		err := rows.Scan(&taskID)
+		if err != nil {
+			return nil, err
+		}
+		taskIDs = append(taskIDs, taskID)
+	}
+	return taskIDs, nil
+}

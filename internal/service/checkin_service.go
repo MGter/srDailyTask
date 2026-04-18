@@ -59,3 +59,7 @@ func (s *CheckInService) GetByTaskID(taskID uint64, limit, offset int) ([]*model
 func (s *CheckInService) GetTodayByTaskID(taskID uint64) (*model.CheckIn, error) {
 	return s.repo.FindTodayByTaskID(taskID)
 }
+
+func (s *CheckInService) GetTodayCheckedTaskIDs(userID uint64) ([]uint64, error) {
+	return s.repo.FindTodayCheckedTaskIDs(userID)
+}

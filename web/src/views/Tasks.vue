@@ -93,8 +93,16 @@ const loadTasks = async () => {
   const userId = parseInt(localStorage.getItem('userId'))
   loading.value = true
   try {
+    // 获取任务列表
     const res = await taskApi.getUserTasks(userId, { limit: 20, offset: 0 })
-    tasks.value = res.data.map(task => ({ ...task, checked: false }))
+    // 获取今天已打卡的任务ID
+    const checkedRes = await checkinApi.getTodayChecked(userId)
+    const checkedIds = checkedRes.data || []
+    // 标记已打卡的任务
+    tasks.value = res.data.map(task => ({
+      ...task,
+      checked: checkedIds.includes(task.id)
+    }))
   } catch (e) {
     console.error('加载任务失败', e)
   } finally {

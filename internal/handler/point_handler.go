@@ -55,3 +55,19 @@ func (h *PointHandler) GetPointHistory(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, wallets)
 }
+
+func (h *PointHandler) GetTodayChecked(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromPath(r, "/api/checkin/today/")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	taskIDs, err := h.checkinSvc.GetTodayCheckedTaskIDs(userID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, taskIDs)
+}
