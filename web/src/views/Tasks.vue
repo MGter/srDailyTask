@@ -770,9 +770,28 @@ h1 {
 }
 
 .task-item.checked {
-  background: #e5e5e5;
-  opacity: 0.7;
+  background: #e5e5ea;
 }
+
+.task-item.checked .task-info h4 {
+  color: #86868b;
+}
+
+.task-item.checked .level-dot {
+  background: #86868b;
+}
+
+.task-item.checked .task-meta {
+  color: #86868b;
+}
+
+.task-item.checked .task-points {
+  color: #86868b;
+}
+
+.task-item.level-1.checked { border-left-color: #86868b; }
+.task-item.level-2.checked { border-left-color: #86868b; }
+.task-item.level-3.checked { border-left-color: #86868b; }
 
 .task-item.level-1 { border-left-color: #34c759; }
 .task-item.level-2 { border-left-color: #ff9500; }
