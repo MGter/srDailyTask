@@ -46,7 +46,7 @@
           <div v-if="loadingTasks" class="loading">加载中...</div>
           <div v-else-if="todayTasks.length === 0" class="empty">今天没有需要打卡的任务</div>
           <div v-else class="tasks">
-            <div class="task-item" v-for="task in todayTasks" :key="task.id" :class="['level-' + task.level, { 'checked': task.checked }]">
+            <div class="task-item" v-for="task in paginatedTasks" :key="task.id" :class="['level-' + task.level, { 'checked': task.checked }]">
               <div class="task-info">
                 <h4>
                   <span class="level-dot" :class="'dot-' + task.level"></span>
@@ -63,6 +63,12 @@
                 <button v-if="!task.checked" @click="checkin(task.id)">打卡</button>
                 <button v-else class="cancel-btn" @click="cancelCheckin(task.id)">取消打卡</button>
               </div>
+            </div>
+            <!-- 分页按钮 -->
+            <div v-if="totalPages > 1" class="pagination">
+              <button class="page-btn" :disabled="currentPage === 1" @click="prevPage">上一页</button>
+              <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+              <button class="page-btn" :disabled="currentPage === totalPages" @click="nextPage">下一页</button>
             </div>
           </div>
         </div>
@@ -272,6 +278,24 @@ const todayTasks = computed(() => {
     return a.checked ? 1 : -1
   })
 })
+
+const pageSize = 8
+const currentPage = ref(1)
+
+const totalPages = computed(() => Math.ceil(todayTasks.value.length / pageSize))
+
+const paginatedTasks = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return todayTasks.value.slice(start, start + pageSize)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--
+}
 
 const otherTasks = computed(() => {
   return tasks.value.filter(t => !t.should_checkin_today && !t.is_expired)
@@ -615,13 +639,10 @@ onMounted(async () => {
   background-attachment: fixed;
 }
 
-/* 手机端增加两边空隙 */
+/* 手机端调整 */
 @media (max-width: 600px) {
   .dashboard-container {
-    padding: 15px 8px 50px 8px;
-  }
-  .section {
-    margin: 0 4px 12px 4px;
+    padding: 15px 10px 50px 10px;
   }
 }
 
@@ -763,8 +784,36 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 400px;
-  overflow-y: auto;
+}
+
+/* 分页 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
+.page-btn {
+  padding: 6px 16px;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.page-btn:disabled {
+  background: #c7c7cc;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #86868b;
+  font-size: 13px;
 }
 
 .task-item {
