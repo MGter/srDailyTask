@@ -145,9 +145,9 @@
             </select>
           </div>
 
-          <div v-if="loadingStats" class="loading">加载中...</div>
-          <div v-else class="chart-wrapper">
-            <canvas ref="chartCanvas"></canvas>
+          <div class="chart-wrapper">
+            <div v-if="loadingStats" class="loading">加载中...</div>
+            <canvas v-show="!loadingStats" ref="chartCanvas"></canvas>
           </div>
         </div>
       </div>
@@ -368,8 +368,12 @@ const loadDailyStats = async () => {
   try {
     const res = await pointsApi.getDailyStats(userId, { days: chartDays.value })
     dailyStats.value = res.data
+    // 等待DOM更新后再渲染图表
     await nextTick()
-    renderChart()
+    // 再次等待确保canvas已渲染
+    setTimeout(() => {
+      renderChart()
+    }, 100)
   } catch (e) {
     console.error('加载统计失败', e)
   } finally {
@@ -430,12 +434,29 @@ const renderChart = () => {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          position: 'top'
+          position: 'top',
+          labels: {
+            color: '#1d1d1f'
+          }
         }
       },
       scales: {
         y: {
-          beginAtZero: true
+          beginAtZero: true,
+          ticks: {
+            color: '#1d1d1f'
+          },
+          grid: {
+            color: '#e5e5e5'
+          }
+        },
+        x: {
+          ticks: {
+            color: '#1d1d1f'
+          },
+          grid: {
+            display: false
+          }
         }
       }
     }
@@ -740,11 +761,15 @@ h1 {
 }
 
 .chart-wrapper {
-  height: 320px;
+  height: 300px;
   position: relative;
-  background: #f5f5f7;
   border-radius: 10px;
-  padding: 10px;
+  padding: 15px;
+}
+
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .loading, .empty {
