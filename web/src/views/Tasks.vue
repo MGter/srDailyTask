@@ -444,7 +444,7 @@ const renderChart = () => {
           borderRadius: 6
         },
         {
-          label: '累计结余',
+          label: '当日结余',
           data: balanceData,
           backgroundColor: '#ff9500',
           borderRadius: 6

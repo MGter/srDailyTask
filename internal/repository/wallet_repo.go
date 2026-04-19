@@ -162,24 +162,13 @@ func (r *WalletRepository) GetDailyStats(userID uint64, days int) ([]*DailyStats
 		dateList = append(dateList, d)
 	}
 
-	// 计算每日累计余额
-	balanceMap := map[string]int{}
-	cumulative := 0
-	for _, d := range dateList {
-		s := walletMap[d]
-		if s != nil {
-			cumulative += s.Earn - s.Spend
-		}
-		balanceMap[d] = cumulative
-	}
-
-	// 构建最终结果
+	// 计算每日当日结余（当天净变化）
 	for _, d := range dateList {
 		s := walletMap[d]
 		if s == nil {
 			s = &DailyStats{Date: d, Earn: 0, Spend: 0}
 		}
-		s.Balance = balanceMap[d]
+		s.Balance = s.Earn - s.Spend  // 当日结余 = 当日积累 - 当日消耗
 		stats = append(stats, s)
 	}
 
