@@ -46,7 +46,7 @@
           <div v-if="loadingTasks" class="loading">加载中...</div>
           <div v-else-if="todayTasks.length === 0" class="empty">今天没有需要打卡的任务</div>
           <div v-else class="tasks">
-            <div class="task-item" v-for="task in todayTasks" :key="task.id" :class="'level-' + task.level">
+            <div class="task-item" v-for="task in todayTasks" :key="task.id" :class="['level-' + task.level, { 'checked': task.checked }]">
               <div class="task-info">
                 <h4>
                   <span class="level-dot" :class="'dot-' + task.level"></span>
@@ -209,7 +209,12 @@ const todayText = computed(() => {
 })
 
 const todayTasks = computed(() => {
-  return tasks.value.filter(t => t.should_checkin_today && !t.is_expired)
+  const filtered = tasks.value.filter(t => t.should_checkin_today && !t.is_expired)
+  // 未打卡任务排在前面，已打卡排在后面
+  return filtered.sort((a, b) => {
+    if (a.checked === b.checked) return 0
+    return a.checked ? 1 : -1
+  })
 })
 
 const otherTasks = computed(() => {
@@ -655,6 +660,11 @@ h1 {
 
 .task-item.inactive {
   opacity: 0.6;
+}
+
+.task-item.checked {
+  background: #e5e5e5;
+  opacity: 0.7;
 }
 
 .task-item.level-1 { border-left-color: #34c759; }
