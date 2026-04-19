@@ -378,7 +378,15 @@ const loadDailyStats = async () => {
 }
 
 const renderChart = () => {
-  if (!chartCanvas.value || dailyStats.value.length === 0) return
+  console.log('renderChart called, canvas:', chartCanvas.value, 'data:', dailyStats.value.length)
+  if (!chartCanvas.value) {
+    console.log('No canvas found')
+    return
+  }
+  if (dailyStats.value.length === 0) {
+    console.log('No data')
+    return
+  }
 
   if (chartInstance) {
     chartInstance.destroy()
@@ -389,6 +397,8 @@ const renderChart = () => {
   const earnData = dailyStats.value.map(s => s.earn)
   const spendData = dailyStats.value.map(s => s.spend)
   const balanceData = dailyStats.value.map(s => s.balance)
+
+  console.log('Chart labels:', labels, 'earnData:', earnData)
 
   chartInstance = new Chart(ctx, {
     type: 'bar',
