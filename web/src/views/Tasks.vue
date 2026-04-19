@@ -463,7 +463,14 @@ const renderChart = () => {
         legend: {
           position: 'top',
           labels: {
-            color: '#1d1d1f'
+            color: '#1d1d1f',
+            font: {
+              size: 11
+            },
+            boxWidth: 12,
+            boxHeight: 12,
+            padding: 8,
+            usePointStyle: true
           }
         }
       },
