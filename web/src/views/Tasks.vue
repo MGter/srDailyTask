@@ -98,6 +98,7 @@
                 <span :class="['amount', item.type]">
                   {{ item.type === 'earn' ? '+' : '-' }}{{ item.amount }}
                 </span>
+                <button class="repeat-btn small" @click="repeatRecord(item)">重复</button>
                 <button class="delete-btn small" @click="deleteRecord(item.id)">删除</button>
               </div>
             </div>
@@ -388,6 +389,13 @@ const deleteRecord = async (id) => {
   } catch (e) {
     alert('删除失败：' + (e.response?.data?.error || '未知错误'))
   }
+}
+
+const repeatRecord = (item) => {
+  addForm.value.type = item.type
+  addForm.value.amount = item.amount
+  addForm.value.description = item.description
+  addForm.value.record_time = getDefaultTime()  // 使用当前时间
 }
 
 const loadDailyStats = async () => {
@@ -722,6 +730,16 @@ h1 {
 }
 
 .delete-btn.small { padding: 5px 8px; }
+
+.repeat-btn {
+  padding: 5px 8px;
+  background: #34c759;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
 
 .task-item button:not(.delete-btn) {
   padding: 6px 14px;
