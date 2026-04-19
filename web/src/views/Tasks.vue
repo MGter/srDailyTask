@@ -58,6 +58,7 @@
                 </p>
               </div>
               <div class="task-actions">
+                <button class="edit-btn" @click="editTask(task)">修改</button>
                 <button class="delete-btn" @click="deleteTask(task.id)">删除</button>
                 <button v-if="!task.checked" @click="checkin(task.id)">打卡</button>
                 <button v-else class="cancel-btn" @click="cancelCheckin(task.id)">取消打卡</button>
@@ -124,10 +125,50 @@
                 </p>
               </div>
               <div class="task-actions">
+                <button class="edit-btn" @click="editTask(task)">修改</button>
                 <button class="delete-btn" @click="deleteTask(task.id)">删除</button>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- 编辑任务弹窗 -->
+      <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+        <div class="modal-content">
+          <h3>修改任务</h3>
+          <form @submit.prevent="updateTask">
+            <div class="form-group">
+              <label>任务标题</label>
+              <input v-model="editForm.title" required />
+            </div>
+            <div class="form-group">
+              <label>周期模式</label>
+              <select v-model="editForm.circle_mode">
+                <option value="once">单次</option>
+                <option value="weekly">每周一</option>
+                <option value="workday">工作日</option>
+                <option value="weekend">周末</option>
+                <option value="custom">每天</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>任务级别</label>
+              <select v-model.number="editForm.level">
+                <option :value="1">● 低</option>
+                <option :value="2">● 中</option>
+                <option :value="3">● 高</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>积分奖励</label>
+              <input v-model.number="editForm.points" type="number" min="1" required />
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="cancel-btn" @click="closeEditModal">取消</button>
+              <button type="submit" class="save-btn">保存</button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -180,6 +221,15 @@ let chartInstance = null
 const userId = parseInt(localStorage.getItem('userId'))
 
 const newTask = ref({
+  title: '',
+  circle_mode: 'workday',
+  level: 1,
+  points: 10
+})
+
+const showEditModal = ref(false)
+const editForm = ref({
+  id: 0,
   title: '',
   circle_mode: 'workday',
   level: 1,
@@ -305,6 +355,43 @@ const deleteTask = async (taskId) => {
     tasks.value = tasks.value.filter(t => t.id !== taskId)
   } catch (e) {
     alert('删除失败：' + (e.response?.data?.error || '未知错误'))
+  }
+}
+
+const editTask = (task) => {
+  editForm.value = {
+    id: task.id,
+    title: task.title,
+    circle_mode: task.circle_mode,
+    level: task.level,
+    points: task.points
+  }
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+}
+
+const updateTask = async () => {
+  try {
+    await taskApi.update(editForm.value.id, {
+      title: editForm.value.title,
+      circle_mode: editForm.value.circle_mode,
+      level: Number(editForm.value.level),
+      points: Number(editForm.value.points)
+    })
+    // 更新本地任务列表
+    const task = tasks.value.find(t => t.id === editForm.value.id)
+    if (task) {
+      task.title = editForm.value.title
+      task.circle_mode = editForm.value.circle_mode
+      task.level = editForm.value.level
+      task.points = editForm.value.points
+    }
+    closeEditModal()
+  } catch (e) {
+    alert('修改失败：' + (e.response?.data?.error || '未知错误'))
   }
 }
 
@@ -719,6 +806,16 @@ h1 {
 
 .task-actions { display: flex; gap: 6px; }
 
+.edit-btn {
+  padding: 6px 12px;
+  background: #5856d6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
 .delete-btn {
   padding: 6px 12px;
   background: #ff3b30;
@@ -847,5 +944,81 @@ h1 {
   .right-column {
     width: 100%;
   }
+}
+
+/* 编辑弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 350px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  margin: 0 0 20px 0;
+  color: #1d1d1f;
+  font-size: 18px;
+}
+
+.modal-content .form-group {
+  margin-bottom: 15px;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 5px;
+  color: #1d1d1f;
+  font-size: 14px;
+}
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1d1d1f;
+  background: #f5f5f7;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.modal-actions .cancel-btn {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+
+.modal-actions .save-btn {
+  background: #007aff;
+  color: white;
 }
 </style>
