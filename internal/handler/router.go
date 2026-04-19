@@ -60,7 +60,15 @@ func NewRouter() *http.ServeMux {
 	// Check-in routes
 	mux.HandleFunc("/api/checkin/today/", methodHandler("GET", pointHandler.GetTodayChecked))
 	mux.HandleFunc("/api/checkin/user/", methodHandler("GET", pointHandler.GetCheckIns))
-	mux.HandleFunc("/api/checkin/", methodHandler("POST", taskHandler.CheckIn))
+	mux.HandleFunc("/api/checkin/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			taskHandler.CheckIn(w, r)
+		} else if r.Method == "DELETE" {
+			taskHandler.CancelCheckIn(w, r)
+		} else {
+			http.Error(w, "Method not allowed", 405)
+		}
+	})
 
 	// Wallet routes
 	mux.HandleFunc("/api/wallet/add", methodHandler("POST", walletHandler.AddRecord))

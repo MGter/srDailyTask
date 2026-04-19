@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"daily_task/internal/logger"
 	"daily_task/internal/model"
 	"daily_task/internal/repository"
 )
@@ -12,6 +13,7 @@ type TaskService struct {
 	repo       *repository.TaskRepository
 	checkinSvc *CheckInService
 	userSvc    *UserService
+	walletSvc  *WalletService
 }
 
 func NewTaskService() *TaskService {
@@ -19,6 +21,7 @@ func NewTaskService() *TaskService {
 		repo:       repository.NewTaskRepository(),
 		checkinSvc: NewCheckInService(),
 		userSvc:    NewUserService(),
+		walletSvc:  NewWalletService(),
 	}
 }
 
@@ -180,4 +183,50 @@ func (s *TaskService) CheckIn(taskID, userID uint64) (*model.CheckIn, error) {
 	}
 
 	return checkin, nil
+}
+
+// CancelCheckIn 取消打卡，删除打卡记录和钱包记录
+func (s *TaskService) CancelCheckIn(taskID, userID uint64) error {
+	task, err := s.repo.FindByID(taskID)
+	if err != nil {
+		return err
+	}
+	if task == nil {
+		return errors.New("task not found")
+	}
+	if task.UserID != userID {
+		return errors.New("task does not belong to user")
+	}
+
+	// 找到今天的打卡记录
+	checkin, err := s.checkinSvc.GetTodayByTaskID(taskID)
+	if err != nil {
+		return err
+	}
+	if checkin == nil {
+		return errors.New("not checked in today")
+	}
+
+	// 删除打卡记录
+	if err := s.checkinSvc.Delete(checkin.ID); err != nil {
+		return err
+	}
+
+	// 找到对应的钱包记录并删除
+	if err := s.walletSvc.DeleteByCheckinID(checkin.ID); err != nil {
+		logger.Error("task_service.go", 195, "Failed to delete wallet record: %v", err)
+	}
+
+	// 更新用户积分
+	user, err := s.userSvc.GetByID(userID)
+	if err != nil {
+		return err
+	}
+	newPoints := user.Points - task.Points
+	if err := s.userSvc.UpdatePoints(userID, newPoints); err != nil {
+		return err
+	}
+
+	logger.Info("task_service.go", 205, "User %d cancelled checkin for task %d", userID, taskID)
+	return nil
 }

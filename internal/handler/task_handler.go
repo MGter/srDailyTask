@@ -193,3 +193,25 @@ func (h *TaskHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 	logger.Info("task_handler.go", 120, "Check-in success: task %d, user %d", taskID, req.UserID)
 	writeJSON(w, http.StatusOK, checkin)
 }
+
+func (h *TaskHandler) CancelCheckIn(w http.ResponseWriter, r *http.Request) {
+	taskID, err := getCheckinTaskIDFromPath(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid task id")
+		return
+	}
+
+	var req model.CheckInRequest
+	if err := readBody(r, &req); err != nil {
+		req.UserID = 1
+	}
+
+	if err := h.svc.CancelCheckIn(taskID, req.UserID); err != nil {
+		logger.Error("task_handler.go", 135, "Cancel check-in failed: %v", err)
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	logger.Info("task_handler.go", 139, "Cancel check-in success: task %d, user %d", taskID, req.UserID)
+	writeJSON(w, http.StatusOK, map[string]string{"message": "checkin cancelled"})
+}

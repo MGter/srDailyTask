@@ -29,6 +29,7 @@ export const taskApi = {
 // 打卡相关
 export const checkinApi = {
   checkin: (taskId, data) => api.post(`/checkin/${taskId}`, data),
+  cancel: (taskId, data) => api.delete(`/checkin/${taskId}`, { data }),
   getUserCheckins: (userId, params) => api.get(`/checkin/user/${userId}`, { params }),
   getTodayChecked: (userId) => api.get(`/checkin/today/${userId}`)
 }

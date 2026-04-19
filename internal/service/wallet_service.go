@@ -10,14 +10,16 @@ import (
 )
 
 type WalletService struct {
-	repo    *repository.WalletRepository
-	userSvc *UserService
+	repo       *repository.WalletRepository
+	checkinRepo *repository.CheckInRepository
+	userSvc    *UserService
 }
 
 func NewWalletService() *WalletService {
 	return &WalletService{
-		repo:    repository.NewWalletRepository(),
-		userSvc: NewUserService(),
+		repo:       repository.NewWalletRepository(),
+		checkinRepo: repository.NewCheckInRepository(),
+		userSvc:    NewUserService(),
 	}
 }
 
@@ -137,6 +139,13 @@ func (s *WalletService) Delete(id uint64, userID uint64) error {
 		return errors.New("record not found or not owned by user")
 	}
 
+	// 如果是打卡记录，同步删除打卡历史
+	if wallet.CheckinID > 0 {
+		if err := s.checkinRepo.Delete(wallet.CheckinID); err != nil {
+			logger.Error("wallet_service.go", 142, "Failed to delete checkin: %v", err)
+		}
+	}
+
 	if err := s.repo.Delete(id, userID); err != nil {
 		return err
 	}
@@ -166,4 +175,8 @@ func (s *WalletService) List(limit, offset int) ([]*model.Wallet, error) {
 
 func (s *WalletService) GetDailyStats(userID uint64, days int) ([]*repository.DailyStats, error) {
 	return s.repo.GetDailyStats(userID, days)
+}
+
+func (s *WalletService) DeleteByCheckinID(checkinID uint64) error {
+	return s.repo.DeleteByCheckinID(checkinID)
 }

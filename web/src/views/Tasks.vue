@@ -59,9 +59,8 @@
               </div>
               <div class="task-actions">
                 <button class="delete-btn" @click="deleteTask(task.id)">删除</button>
-                <button @click="checkin(task.id)" :disabled="task.checked">
-                  {{ task.checked ? '已打卡' : '打卡' }}
-                </button>
+                <button v-if="!task.checked" @click="checkin(task.id)">打卡</button>
+                <button v-else class="cancel-btn" @click="cancelCheckin(task.id)">取消打卡</button>
               </div>
             </div>
           </div>
@@ -317,6 +316,24 @@ const checkin = async (taskId) => {
     await loadDailyStats()
   } catch (e) {
     alert('打卡失败：' + (e.response?.data?.error || '未知错误'))
+  }
+}
+
+const cancelCheckin = async (taskId) => {
+  if (!confirm('确定取消打卡吗？积分将退还。')) return
+  try {
+    await checkinApi.cancel(taskId, { user_id: userId })
+    const task = tasks.value.find(t => t.id === taskId)
+    if (task) task.checked = false
+    if (task && task.circle_mode === 'once') {
+      task.is_expired = false
+    }
+    const res = await userApi.getUser(userId)
+    user.value = res.data
+    await loadHistory()
+    await loadDailyStats()
+  } catch (e) {
+    alert('取消失败：' + (e.response?.data?.error || '未知错误'))
   }
 }
 
@@ -697,6 +714,10 @@ h1 {
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
+}
+
+.task-item button.cancel-btn {
+  background: #ff9500;
 }
 
 .task-item button:disabled { background: #c7c7cc; }

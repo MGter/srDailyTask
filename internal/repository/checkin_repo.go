@@ -28,6 +28,22 @@ func (r *CheckInRepository) Create(checkin *model.CheckIn) error {
 	return nil
 }
 
+func (r *CheckInRepository) Delete(id uint64) error {
+	query := `DELETE FROM checkins WHERE id = ?`
+	_, err := DB.Exec(query, id)
+	return err
+}
+
+func (r *CheckInRepository) FindByID(id uint64) (*model.CheckIn, error) {
+	c := &model.CheckIn{}
+	query := `SELECT id, task_id, user_id, points, check_time FROM checkins WHERE id = ?`
+	err := DB.QueryRow(query, id).Scan(&c.ID, &c.TaskID, &c.UserID, &c.Points, &c.CheckTime)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
 func (r *CheckInRepository) FindByUserID(userID uint64, limit, offset int) ([]*model.CheckIn, error) {
 	query := `SELECT id, task_id, user_id, points, check_time
 	          FROM checkins WHERE user_id = ? ORDER BY check_time DESC LIMIT ? OFFSET ?`

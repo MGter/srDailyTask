@@ -12,6 +12,7 @@ const (
 type Wallet struct {
 	ID          uint64     `json:"id"`
 	UserID      uint64     `json:"user_id"`
+	CheckinID   uint64     `json:"checkin_id"`   // 关联的打卡记录ID，0表示手动添加
 	Balance     int        `json:"balance"`
 	Type        WalletType `json:"type"`
 	Amount      int        `json:"amount"`

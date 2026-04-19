@@ -36,6 +36,7 @@ func (s *CheckInService) Create(taskID, userID uint64, points int, taskTitle str
 	desc := "打卡: " + taskTitle
 	wallet := &model.Wallet{
 		UserID:      userID,
+		CheckinID:   checkin.ID, // 关联打卡记录
 		Balance:     points,
 		Type:        model.WalletEarn,
 		Amount:      points,
@@ -44,10 +45,10 @@ func (s *CheckInService) Create(taskID, userID uint64, points int, taskTitle str
 		RecordTime:  now,
 	}
 	if err := s.walletSvc.Create(wallet); err != nil {
-		logger.Error("checkin_service.go", 38, "Failed to create wallet record: %v", err)
+		logger.Error("checkin_service.go", 42, "Failed to create wallet record: %v", err)
 	}
 
-	logger.Info("checkin_service.go", 41, "User %d checked in task %d, earned %d points", userID, taskID, points)
+	logger.Info("checkin_service.go", 46, "User %d checked in task %d, earned %d points", userID, taskID, points)
 	return checkin, nil
 }
 
@@ -65,4 +66,8 @@ func (s *CheckInService) GetTodayByTaskID(taskID uint64) (*model.CheckIn, error)
 
 func (s *CheckInService) GetTodayCheckedTaskIDs(userID uint64) ([]uint64, error) {
 	return s.repo.FindTodayCheckedTaskIDs(userID)
+}
+
+func (s *CheckInService) Delete(id uint64) error {
+	return s.repo.Delete(id)
 }
