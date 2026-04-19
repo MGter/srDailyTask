@@ -608,11 +608,21 @@ onMounted(async () => {
 <style scoped>
 .dashboard-container {
   min-height: 100vh;
-  padding: 20px;
+  padding: 20px 15px 40px 15px;
   background-image: url('/assets/kita.webp');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
+}
+
+/* 手机端增加两边空隙 */
+@media (max-width: 600px) {
+  .dashboard-container {
+    padding: 15px 8px 50px 8px;
+  }
+  .section {
+    margin: 0 4px 12px 4px;
+  }
 }
 
 header {
