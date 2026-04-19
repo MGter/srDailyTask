@@ -24,6 +24,10 @@
           已有账号？<router-link to="/login">登录</router-link>
         </p>
       </form>
+      <footer class="footer">
+        <span>© 2026 srDailyTask</span>
+        <a href="https://github.com/MGter/srDailyTask" target="_blank">GitHub</a>
+      </footer>
     </div>
   </div>
 </template>
@@ -144,5 +148,22 @@ button:disabled {
 .link a {
   color: #007aff;
   font-weight: 500;
+}
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 15px 20px;
+  color: #86868b;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+.footer a {
+  color: #007aff;
+  text-decoration: none;
 }
 </style>

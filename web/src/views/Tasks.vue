@@ -193,6 +193,11 @@
         </div>
       </div>
     </div>
+
+    <footer class="footer">
+      <span>© 2026 srDailyTask</span>
+      <a href="https://github.com/MGter/srDailyTask" target="_blank">GitHub</a>
+    </footer>
   </div>
 </template>
 
@@ -1020,5 +1025,21 @@ h1 {
 .modal-actions .save-btn {
   background: #007aff;
   color: white;
+}
+
+/* 底部版权 */
+.footer {
+  text-align: center;
+  padding: 15px 20px;
+  color: #86868b;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.footer a {
+  color: #007aff;
+  text-decoration: none;
 }
 </style>
