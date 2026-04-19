@@ -215,3 +215,26 @@ func (h *TaskHandler) CancelCheckIn(w http.ResponseWriter, r *http.Request) {
 	logger.Info("task_handler.go", 139, "Cancel check-in success: task %d, user %d", taskID, req.UserID)
 	writeJSON(w, http.StatusOK, map[string]string{"message": "checkin cancelled"})
 }
+
+func (h *TaskHandler) SkipCheckIn(w http.ResponseWriter, r *http.Request) {
+	taskID, err := getCheckinTaskIDFromPath(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid task id")
+		return
+	}
+
+	var req model.CheckInRequest
+	if err := readBody(r, &req); err != nil {
+		req.UserID = 1 // 默认用户
+	}
+
+	checkin, err := h.svc.SkipCheckIn(taskID, req.UserID)
+	if err != nil {
+		logger.Error("task_handler.go", 150, "Skip check-in failed: %v", err)
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	logger.Info("task_handler.go", 154, "Skip check-in success: task %d, user %d", taskID, req.UserID)
+	writeJSON(w, http.StatusOK, checkin)
+}

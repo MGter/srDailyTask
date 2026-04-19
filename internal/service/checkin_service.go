@@ -33,22 +33,28 @@ func (s *CheckInService) Create(taskID, userID uint64, points int, taskTitle str
 		return nil, err
 	}
 
-	desc := "打卡: " + taskTitle
-	wallet := &model.Wallet{
-		UserID:      userID,
-		CheckinID:   checkin.ID, // 关联打卡记录
-		Balance:     points,
-		Type:        model.WalletEarn,
-		Amount:      points,
-		Description: desc,
-		CreatedAt:   now,
-		RecordTime:  now,
-	}
-	if err := s.walletSvc.Create(wallet); err != nil {
-		logger.Error("checkin_service.go", 42, "Failed to create wallet record: %v", err)
-	}
+    if points > 0 {
+        desc := "打卡: " + taskTitle
+        wallet := &model.Wallet{
+            UserID:      userID,
+            CheckinID:   checkin.ID, // 关联打卡记录
+            Balance:     points,
+            Type:        model.WalletEarn,
+            Amount:      points,
+            Description: desc,
+            CreatedAt:   now,
+            RecordTime:  now,
+        }
+        if err := s.walletSvc.Create(wallet); err != nil {
+            logger.Error("checkin_service.go", 42, "Failed to create wallet record: %v", err)
+        }
+    }
 
-	logger.Info("checkin_service.go", 46, "User %d checked in task %d, earned %d points", userID, taskID, points)
+    if points > 0 {
+        logger.Info("checkin_service.go", 46, "User %d checked in task %d, earned %d points", userID, taskID, points)
+    } else {
+        logger.Info("checkin_service.go", 46, "User %d skipped task %d", userID, taskID)
+    }
 	return checkin, nil
 }
 

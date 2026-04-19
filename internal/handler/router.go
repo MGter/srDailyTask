@@ -60,6 +60,7 @@ func NewRouter() *http.ServeMux {
 	// Check-in routes
 	mux.HandleFunc("/api/checkin/today/", methodHandler("GET", pointHandler.GetTodayChecked))
 	mux.HandleFunc("/api/checkin/user/", methodHandler("GET", pointHandler.GetCheckIns))
+	mux.HandleFunc("/api/checkin/{taskId}/skip", methodHandler("POST", taskHandler.SkipCheckIn))
 	mux.HandleFunc("/api/checkin/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
 			taskHandler.CheckIn(w, r)

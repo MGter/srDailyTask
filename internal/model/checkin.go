@@ -11,6 +11,7 @@ type CheckIn struct {
 }
 
 type CheckInRequest struct {
-	TaskID uint64 `json:"task_id"`
-	UserID uint64 `json:"user_id"`
+    TaskID uint64 `json:"task_id"`
+    UserID uint64 `json:"user_id"`
+    Skip   bool   `json:"skip,omitempty"`
 }

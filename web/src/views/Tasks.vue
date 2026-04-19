@@ -60,6 +60,7 @@
               <div class="task-actions">
                 <button class="edit-btn" @click="editTask(task)">修改</button>
                 <button class="delete-btn" @click="deleteTask(task.id)">删除</button>
+                <button v-if="!task.checked" class="skip-btn" @click="skipTask(task.id)">跳过</button>
                 <button v-if="!task.checked" @click="checkin(task.id)">打卡</button>
                 <button v-else class="cancel-btn" @click="cancelCheckin(task.id)">取消打卡</button>
               </div>
@@ -479,6 +480,19 @@ const cancelCheckin = async (taskId) => {
     await loadDailyStats()
   } catch (e) {
     alert('取消失败：' + (e.response?.data?.error || '未知错误'))
+  }
+}
+
+const skipTask = async (taskId) => {
+  if (!confirm('确定跳过此任务吗？跳过后不计积分。')) return
+  try {
+    await checkinApi.skip(taskId, { user_id: userId })
+    const task = tasks.value.find(t => t.id === taskId)
+    if (task) task.checked = true
+    await loadHistory()
+    await loadDailyStats()
+  } catch (e) {
+    alert('跳过失败：' + (e.response?.data?.error || '未知错误'))
   }
 }
 
@@ -914,6 +928,17 @@ h1 {
 
 .task-actions { display: flex; gap: 6px; }
 
+/* 手机端按钮文字竖排 */
+@media (max-width: 600px) {
+  .task-actions button,
+  .task-item button {
+    writing-mode: vertical-rl;
+    padding: 6px 3px !important;
+    font-size: 12px !important;
+    letter-spacing: 0;
+  }
+}
+
 .edit-btn {
   padding: 6px 12px;
   background: #5856d6;
@@ -936,6 +961,16 @@ h1 {
 
 .delete-btn.small { padding: 5px 8px; }
 
+.skip-btn {
+  padding: 6px 12px;
+  background: #86868b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
 .repeat-btn {
   padding: 5px 8px;
   background: #34c759;
@@ -946,8 +981,8 @@ h1 {
   font-size: 12px;
 }
 
-.task-item button:not(.delete-btn) {
-  padding: 6px 14px;
+.task-item button:not(.delete-btn):not(.skip-btn):not(.edit-btn) {
+  padding: 6px 12px;
   background: #007aff;
   color: white;
   border: none;

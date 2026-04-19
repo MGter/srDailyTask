@@ -230,3 +230,39 @@ func (s *TaskService) CancelCheckIn(taskID, userID uint64) error {
 	logger.Info("task_service.go", 205, "User %d cancelled checkin for task %d", userID, taskID)
 	return nil
 }
+
+// SkipCheckIn 跳过打卡，记录跳过但不获得积分
+func (s *TaskService) SkipCheckIn(taskID, userID uint64) (*model.CheckIn, error) {
+	task, err := s.repo.FindByID(taskID)
+	if err != nil {
+		return nil, err
+	}
+	if task == nil {
+		return nil, errors.New("task not found")
+	}
+	if task.UserID != userID {
+		return nil, errors.New("task does not belong to user")
+	}
+
+	// 检查今天是否需要打卡
+	if !s.ShouldCheckinToday(task) {
+		return nil, errors.New("today is not a check-in day for this task")
+	}
+
+	existing, err := s.checkinSvc.GetTodayByTaskID(taskID)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, errors.New("already checked in today")
+	}
+
+	// 创建跳过记录，积分为0
+	checkin, err := s.checkinSvc.Create(taskID, userID, 0, task.Title)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Info("task_service.go", 240, "User %d skipped task %d", userID, taskID)
+	return checkin, nil
+}

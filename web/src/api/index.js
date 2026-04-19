@@ -30,6 +30,7 @@ export const taskApi = {
 export const checkinApi = {
   checkin: (taskId, data) => api.post(`/checkin/${taskId}`, data),
   cancel: (taskId, data) => api.delete(`/checkin/${taskId}`, { data }),
+  skip: (taskId, data) => api.post(`/checkin/${taskId}/skip`, data),
   getUserCheckins: (userId, params) => api.get(`/checkin/user/${userId}`, { params }),
   getTodayChecked: (userId) => api.get(`/checkin/today/${userId}`)
 }
