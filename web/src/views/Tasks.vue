@@ -95,7 +95,7 @@
           <div v-if="loadingHistory" class="loading">加载中...</div>
           <div v-else-if="history.length === 0" class="empty">暂无记录</div>
           <div v-else class="history-list">
-            <div class="history-item" v-for="item in history" :key="item.id">
+            <div class="history-item" v-for="item in paginatedHistory" :key="item.id">
               <div class="item-info">
                 <span :class="['type', item.type]">{{ item.type === 'earn' ? '收入' : '支出' }}</span>
                 <span class="desc">{{ item.description }}</span>
@@ -108,6 +108,12 @@
                 <button class="repeat-btn small" @click="repeatRecord(item)">重复</button>
                 <button class="delete-btn small" @click="deleteRecord(item.id)">删除</button>
               </div>
+            </div>
+            <!-- 分页按钮 -->
+            <div v-if="historyTotalPages > 1" class="pagination">
+              <button class="page-btn" :disabled="historyPage === 1" @click="prevHistoryPage">上一页</button>
+              <span class="page-info">{{ historyPage }} / {{ historyTotalPages }}</span>
+              <button class="page-btn" :disabled="historyPage === historyTotalPages" @click="nextHistoryPage">下一页</button>
             </div>
           </div>
         </div>
@@ -219,6 +225,23 @@ const router = useRouter()
 const user = ref(null)
 const tasks = ref([])
 const history = ref([])
+const historyPage = ref(1)
+const historyPageSize = 5
+
+const historyTotalPages = computed(() => Math.ceil(history.value.length / historyPageSize))
+
+const paginatedHistory = computed(() => {
+  const start = (historyPage.value - 1) * historyPageSize
+  return history.value.slice(start, start + historyPageSize)
+})
+
+const nextHistoryPage = () => {
+  if (historyPage.value < historyTotalPages.value) historyPage.value++
+}
+
+const prevHistoryPage = () => {
+  if (historyPage.value > 1) historyPage.value--
+}
 const dailyStats = ref([])
 const loadingTasks = ref(true)
 const loadingHistory = ref(false)
@@ -279,7 +302,7 @@ const todayTasks = computed(() => {
   })
 })
 
-const pageSize = 8
+const pageSize = 5
 const currentPage = ref(1)
 
 const totalPages = computed(() => Math.ceil(todayTasks.value.length / pageSize))
@@ -944,8 +967,6 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 250px;
-  overflow-y: auto;
 }
 
 .history-item {
