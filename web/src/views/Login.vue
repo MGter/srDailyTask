@@ -55,71 +55,69 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-image: url('@/assets/kita.png');
+  background-image: url('/assets/kita.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
 }
 .login-box {
-  background: rgba(255, 255, 255, 0.92);
+  background: #ffffff;
   padding: 40px 35px;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  width: 320px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 340px;
 }
 h2 {
   text-align: center;
-  color: #2c3e50;
+  color: #1d1d1f;
   margin-bottom: 30px;
   font-weight: 600;
+  font-size: 24px;
 }
 .form-group {
   margin-bottom: 20px;
 }
 label {
   display: block;
-  margin-bottom: 8px;
-  color: #2c3e50;
+  margin-bottom: 6px;
+  color: #1d1d1f;
   font-weight: 500;
+  font-size: 14px;
 }
 input {
   width: 100%;
   padding: 12px 14px;
-  border: 2px solid #dce6e9;
-  border-radius: 8px;
-  font-size: 14px;
-  background: rgba(255, 255, 255, 0.9);
-  transition: border-color 0.2s;
+  border: 1px solid #d2d2d7;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #1d1d1f;
+  background: #f5f5f7;
+  box-sizing: border-box;
 }
 input:focus {
-  border-color: #42b883;
+  border-color: #007aff;
   outline: none;
+  background: #ffffff;
 }
 button {
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #42b883, #35495e);
+  padding: 14px;
+  background: #007aff;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
 }
 button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(66, 184, 131, 0.4);
+  background: #0066d6;
 }
 button:disabled {
-  background: #a0a0a0;
-  transform: none;
-  box-shadow: none;
+  background: #c7c7cc;
 }
 .error {
-  color: #f56c6c;
+  color: #ff3b30;
   text-align: center;
   margin-top: 15px;
   font-weight: 500;
@@ -127,10 +125,10 @@ button:disabled {
 .link {
   text-align: center;
   margin-top: 25px;
-  color: #7f8c8d;
+  color: #86868b;
 }
 .link a {
-  color: #42b883;
+  color: #007aff;
   font-weight: 500;
 }
 </style>

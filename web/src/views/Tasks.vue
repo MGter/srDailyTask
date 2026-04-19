@@ -13,133 +13,141 @@
       <p>今天是 {{ todayText }}，以下任务需要打卡</p>
     </div>
 
-    <!-- 打卡任务区域 -->
-    <div class="section checkin-section">
-      <div class="section-header">
-        <h2>今日打卡任务</h2>
-      </div>
-
-      <div class="create-task">
-        <form @submit.prevent="createTask">
-          <input v-model="newTask.title" placeholder="任务标题" required />
-          <select v-model="newTask.circle_mode">
-            <option value="once">单次</option>
-            <option value="weekly">每周一</option>
-            <option value="workday">工作日</option>
-            <option value="weekend">周末</option>
-            <option value="custom">每天</option>
-          </select>
-          <select v-model.number="newTask.level">
-            <option :value="1">● 低</option>
-            <option :value="2">● 中</option>
-            <option :value="3">● 高</option>
-          </select>
-          <input v-model.number="newTask.points" type="number" placeholder="积分" min="1" />
-          <button type="submit" :disabled="creating">{{ creating ? '创建...' : '创建' }}</button>
-        </form>
-      </div>
-
-      <div v-if="loadingTasks" class="loading">加载中...</div>
-      <div v-else-if="todayTasks.length === 0" class="empty">今天没有需要打卡的任务</div>
-      <div v-else class="tasks">
-        <div class="task-item" v-for="task in todayTasks" :key="task.id" :class="'level-' + task.level">
-          <div class="task-info">
-            <h4>
-              <span class="level-dot" :class="'dot-' + task.level"></span>
-              {{ task.title }}
-            </h4>
-            <p class="task-meta">
-              <span class="mode">{{ circleModeText(task.circle_mode) }}</span>
-              <span class="task-points">+{{ task.points }}</span>
-            </p>
+    <!-- 左右布局 -->
+    <div class="main-layout">
+      <!-- 左侧：打卡任务 + 钱包 -->
+      <div class="left-column">
+        <!-- 打卡任务区域 -->
+        <div class="section checkin-section">
+          <div class="section-header">
+            <h2>今日打卡任务</h2>
           </div>
-          <div class="task-actions">
-            <button class="delete-btn" @click="deleteTask(task.id)">删除</button>
-            <button @click="checkin(task.id)" :disabled="task.checked">
-              {{ task.checked ? '已打卡' : '打卡' }}
-            </button>
+
+          <div class="create-task">
+            <form @submit.prevent="createTask">
+              <input v-model="newTask.title" placeholder="任务标题" required />
+              <select v-model="newTask.circle_mode">
+                <option value="once">单次</option>
+                <option value="weekly">每周一</option>
+                <option value="workday">工作日</option>
+                <option value="weekend">周末</option>
+                <option value="custom">每天</option>
+              </select>
+              <select v-model.number="newTask.level">
+                <option :value="1">● 低</option>
+                <option :value="2">● 中</option>
+                <option :value="3">● 高</option>
+              </select>
+              <input v-model.number="newTask.points" type="number" placeholder="积分" min="1" />
+              <button type="submit" :disabled="creating">{{ creating ? '创建...' : '创建' }}</button>
+            </form>
+          </div>
+
+          <div v-if="loadingTasks" class="loading">加载中...</div>
+          <div v-else-if="todayTasks.length === 0" class="empty">今天没有需要打卡的任务</div>
+          <div v-else class="tasks">
+            <div class="task-item" v-for="task in todayTasks" :key="task.id" :class="'level-' + task.level">
+              <div class="task-info">
+                <h4>
+                  <span class="level-dot" :class="'dot-' + task.level"></span>
+                  {{ task.title }}
+                </h4>
+                <p class="task-meta">
+                  <span class="mode">{{ circleModeText(task.circle_mode) }}</span>
+                  <span class="task-points">+{{ task.points }}</span>
+                </p>
+              </div>
+              <div class="task-actions">
+                <button class="delete-btn" @click="deleteTask(task.id)">删除</button>
+                <button @click="checkin(task.id)" :disabled="task.checked">
+                  {{ task.checked ? '已打卡' : '打卡' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 积分钱包区域 -->
+        <div class="section wallet-section">
+          <div class="section-header">
+            <h2>积分钱包</h2>
+          </div>
+
+          <div class="action-form">
+            <form @submit.prevent="addRecord">
+              <select v-model="addForm.type">
+                <option value="earn">收入</option>
+                <option value="spend">支出</option>
+              </select>
+              <input v-model.number="addForm.amount" type="number" placeholder="金额" min="1" required />
+              <input v-model="addForm.description" placeholder="描述" required />
+              <input v-model="addForm.record_time" type="datetime-local" required />
+              <button type="submit" :disabled="adding">{{ adding ? '添加...' : '添加' }}</button>
+            </form>
+          </div>
+
+          <div v-if="loadingHistory" class="loading">加载中...</div>
+          <div v-else-if="history.length === 0" class="empty">暂无记录</div>
+          <div v-else class="history-list">
+            <div class="history-item" v-for="item in history" :key="item.id">
+              <div class="item-info">
+                <span :class="['type', item.type]">{{ item.type === 'earn' ? '收入' : '支出' }}</span>
+                <span class="desc">{{ item.description }}</span>
+                <span class="time">{{ formatDate(item.record_time) }}</span>
+              </div>
+              <div class="item-right">
+                <span :class="['amount', item.type]">
+                  {{ item.type === 'earn' ? '+' : '-' }}{{ item.amount }}
+                </span>
+                <button class="delete-btn small" @click="deleteRecord(item.id)">删除</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 其他任务 -->
+        <div class="section other-tasks-section" v-if="otherTasks.length > 0">
+          <div class="section-header">
+            <h2>其他任务</h2>
+            <span class="sub-title">今天不需要打卡</span>
+          </div>
+          <div class="tasks">
+            <div class="task-item inactive" v-for="task in otherTasks" :key="task.id" :class="'level-' + task.level">
+              <div class="task-info">
+                <h4>
+                  <span class="level-dot" :class="'dot-' + task.level"></span>
+                  {{ task.title }}
+                </h4>
+                <p class="task-meta">
+                  <span class="mode">{{ circleModeText(task.circle_mode) }}</span>
+                  <span class="task-points">+{{ task.points }}</span>
+                </p>
+              </div>
+              <div class="task-actions">
+                <button class="delete-btn" @click="deleteTask(task.id)">删除</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 积分钱包区域 -->
-    <div class="section wallet-section">
-      <div class="section-header">
-        <h2>积分钱包</h2>
-      </div>
-
-      <div class="action-form">
-        <form @submit.prevent="addRecord">
-          <select v-model="addForm.type">
-            <option value="earn">收入</option>
-            <option value="spend">支出</option>
-          </select>
-          <input v-model.number="addForm.amount" type="number" placeholder="金额" min="1" required />
-          <input v-model="addForm.description" placeholder="描述" required />
-          <input v-model="addForm.record_time" type="datetime-local" required />
-          <button type="submit" :disabled="adding">{{ adding ? '添加...' : '添加' }}</button>
-        </form>
-      </div>
-
-      <div v-if="loadingHistory" class="loading">加载中...</div>
-      <div v-else-if="history.length === 0" class="empty">暂无记录</div>
-      <div v-else class="history-list">
-        <div class="history-item" v-for="item in history" :key="item.id">
-          <div class="item-info">
-            <span :class="['type', item.type]">{{ item.type === 'earn' ? '收入' : '支出' }}</span>
-            <span class="desc">{{ item.description }}</span>
-            <span class="time">{{ formatDate(item.record_time) }}</span>
+      <!-- 右侧：统计图表 -->
+      <div class="right-column">
+        <div class="section chart-section">
+          <div class="section-header">
+            <h2>积分统计</h2>
+            <select v-model="chartDays" @change="loadDailyStats" class="days-select">
+              <option value="7">7天</option>
+              <option value="14">14天</option>
+              <option value="30">30天</option>
+              <option value="180">180天</option>
+              <option value="360">360天</option>
+            </select>
           </div>
-          <div class="item-right">
-            <span :class="['amount', item.type]">
-              {{ item.type === 'earn' ? '+' : '-' }}{{ item.amount }}
-            </span>
-            <button class="delete-btn small" @click="deleteRecord(item.id)">删除</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- 统计图表区域 -->
-    <div class="section chart-section">
-      <div class="section-header">
-        <h2>积分统计</h2>
-        <select v-model="chartDays" @change="loadDailyStats" class="days-select">
-          <option value="7">7天</option>
-          <option value="14">14天</option>
-          <option value="30">30天</option>
-          <option value="180">180天</option>
-          <option value="360">360天</option>
-        </select>
-      </div>
-
-      <div v-if="loadingStats" class="loading">加载中...</div>
-      <div v-else class="chart-wrapper">
-        <canvas ref="chartCanvas"></canvas>
-      </div>
-    </div>
-
-    <!-- 其他任务（今天不需要打卡） -->
-    <div class="section other-tasks-section" v-if="otherTasks.length > 0">
-      <div class="section-header">
-        <h2>其他任务</h2>
-        <span class="sub-title">今天不需要打卡</span>
-      </div>
-      <div class="tasks">
-        <div class="task-item inactive" v-for="task in otherTasks" :key="task.id" :class="'level-' + task.level">
-          <div class="task-info">
-            <h4>
-              <span class="level-dot" :class="'dot-' + task.level"></span>
-              {{ task.title }}
-            </h4>
-            <p class="task-meta">
-              <span class="mode">{{ circleModeText(task.circle_mode) }}</span>
-              <span class="task-points">+{{ task.points }}</span>
-            </p>
-          </div>
-          <div class="task-actions">
-            <button class="delete-btn" @click="deleteTask(task.id)">删除</button>
+          <div v-if="loadingStats" class="loading">加载中...</div>
+          <div v-else class="chart-wrapper">
+            <canvas ref="chartCanvas"></canvas>
           </div>
         </div>
       </div>
@@ -300,7 +308,6 @@ const checkin = async (taskId) => {
     }
     const res = await userApi.getUser(userId)
     user.value = res.data
-    // 刷新积分历史和统计
     await loadHistory()
     await loadDailyStats()
   } catch (e) {
@@ -378,7 +385,7 @@ const renderChart = () => {
   }
 
   const ctx = chartCanvas.value.getContext('2d')
-  const labels = dailyStats.value.map(s => s.date.slice(5)) // 只显示月-日
+  const labels = dailyStats.value.map(s => s.date.slice(5))
   const earnData = dailyStats.value.map(s => s.earn)
   const spendData = dailyStats.value.map(s => s.spend)
   const balanceData = dailyStats.value.map(s => s.balance)
@@ -391,20 +398,20 @@ const renderChart = () => {
         {
           label: '当日积累',
           data: earnData,
-          backgroundColor: '#42b883',
-          borderRadius: 4
+          backgroundColor: '#34c759',
+          borderRadius: 6
         },
         {
           label: '当日消耗',
           data: spendData,
-          backgroundColor: '#f56c6c',
-          borderRadius: 4
+          backgroundColor: '#ff3b30',
+          borderRadius: 6
         },
         {
           label: '累计结余',
           data: balanceData,
-          backgroundColor: '#e6a23c',
-          borderRadius: 4
+          backgroundColor: '#ff9500',
+          borderRadius: 6
         }
       ]
     },
@@ -437,28 +444,28 @@ onMounted(async () => {
 .dashboard-container {
   min-height: 100vh;
   padding: 20px;
-  background-image: url('@/assets/kita.png');
+  background-image: url('/assets/kita.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  background-repeat: no-repeat;
 }
 
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding: 15px 20px;
-  background: rgba(255, 255, 255, 0.85);
+  margin-bottom: 15px;
+  padding: 12px 20px;
+  background: #ffffff;
   border-radius: 12px;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 h1 {
-  color: #2c3e50;
+  color: #1d1d1f;
   margin: 0;
   font-weight: 600;
+  font-size: 20px;
 }
 
 .user-info {
@@ -468,218 +475,202 @@ h1 {
 }
 
 .points {
-  color: #42b883;
-  font-weight: bold;
-  font-size: 16px;
+  color: #34c759;
+  font-weight: 600;
 }
 
 .logout-btn {
   padding: 8px 16px;
-  background: linear-gradient(135deg, #f56c6c, #e6a23c);
+  background: #ff3b30;
   color: white;
   border: none;
-  border-radius: 20px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.logout-btn:hover {
-  transform: scale(1.05);
+  font-weight: 500;
 }
 
 .today-info {
-  background: rgba(66, 184, 131, 0.9);
-  padding: 12px 18px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  background: #34c759;
+  padding: 10px 16px;
+  border-radius: 10px;
+  margin-bottom: 15px;
   color: white;
   font-weight: 500;
-  backdrop-filter: blur(5px);
+}
+
+/* 左右布局 */
+.main-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.left-column {
+  flex: 1;
+  min-width: 0;
+}
+
+.right-column {
+  width: 380px;
+  flex-shrink: 0;
 }
 
 .section {
-  background: rgba(255, 255, 255, 0.88);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  padding: 20px;
-  margin-bottom: 20px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 18px;
+  margin-bottom: 15px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .section-header h2 {
   margin: 0;
-  color: #2c3e50;
+  color: #1d1d1f;
   font-weight: 600;
+  font-size: 16px;
 }
 
 .sub-title {
-  color: #7f8c8d;
-  font-size: 14px;
+  color: #86868b;
+  font-size: 13px;
 }
 
 /* 创建任务表单 */
 .create-task form, .action-form form {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .create-task input, .create-task select,
 .action-form input, .action-form select {
-  padding: 10px 12px;
-  border: 2px solid #dce6e9;
+  padding: 8px 12px;
+  border: 1px solid #d2d2d7;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  transition: border-color 0.2s;
+  font-size: 14px;
+  color: #1d1d1f;
+  background: #f5f5f7;
 }
 
 .create-task input:focus, .create-task select:focus,
 .action-form input:focus, .action-form select:focus {
-  border-color: #42b883;
+  border-color: #007aff;
   outline: none;
+  background: #ffffff;
 }
 
-.create-task input:first-child { flex: 1; min-width: 150px; }
-.action-form input[placeholder="描述"] { flex: 1; min-width: 120px; }
+.create-task input:first-child { flex: 1; min-width: 140px; }
+.action-form input[placeholder="描述"] { flex: 1; min-width: 100px; }
 
 .create-task button, .action-form button {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #42b883, #35495e);
+  padding: 8px 16px;
+  background: #007aff;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.create-task button:hover, .action-form button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(66, 184, 131, 0.4);
 }
 
 .create-task button:disabled, .action-form button:disabled {
-  background: #ccc;
-  transform: none;
-  box-shadow: none;
+  background: #c7c7cc;
 }
 
 /* 任务列表 */
 .tasks {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .task-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
-  background: rgba(248, 249, 250, 0.95);
+  padding: 10px 14px;
+  background: #f5f5f7;
   border-radius: 10px;
-  border-left: 4px solid #42b883;
-  transition: transform 0.2s;
-}
-
-.task-item:hover {
-  transform: translateX(4px);
+  border-left: 3px solid #34c759;
 }
 
 .task-item.inactive {
-  opacity: 0.65;
-  background: rgba(245, 245, 245, 0.95);
+  opacity: 0.6;
 }
 
-.task-item.level-1 { border-left-color: #42b883; }
-.task-item.level-2 { border-left-color: #e6a23c; }
-.task-item.level-3 { border-left-color: #f56c6c; }
+.task-item.level-1 { border-left-color: #34c759; }
+.task-item.level-2 { border-left-color: #ff9500; }
+.task-item.level-3 { border-left-color: #ff3b30; }
 
 .task-info h4 {
-  margin: 0 0 5px 0;
+  margin: 0 0 4px 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #2c3e50;
-}
-
-.level-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.dot-1 { background: #42b883; }
-.dot-2 { background: #e6a23c; }
-.dot-3 { background: #f56c6c; }
-
-.task-meta {
-  display: flex;
-  gap: 10px;
-  color: #7f8c8d;
+  gap: 6px;
+  color: #1d1d1f;
   font-size: 14px;
 }
 
+.level-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot-1 { background: #34c759; }
+.dot-2 { background: #ff9500; }
+.dot-3 { background: #ff3b30; }
+
+.task-meta {
+  display: flex;
+  gap: 8px;
+  color: #86868b;
+  font-size: 12px;
+}
+
 .task-points {
-  color: #42b883;
+  color: #34c759;
   font-weight: 500;
 }
 
-.task-actions { display: flex; gap: 8px; }
+.task-actions { display: flex; gap: 6px; }
 
 .delete-btn {
-  padding: 8px 14px;
-  background: linear-gradient(135deg, #f56c6c, #c45656);
+  padding: 6px 12px;
+  background: #ff3b30;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
-  transition: transform 0.2s;
 }
 
-.delete-btn:hover {
-  transform: scale(1.05);
-}
-
-.delete-btn.small { padding: 6px 10px; }
+.delete-btn.small { padding: 5px 8px; }
 
 .task-item button:not(.delete-btn) {
-  padding: 8px 18px;
-  background: linear-gradient(135deg, #42b883, #35495e);
+  padding: 6px 14px;
+  background: #007aff;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: transform 0.2s;
+  font-size: 12px;
 }
 
-.task-item button:not(.delete-btn):hover {
-  transform: scale(1.05);
-}
-
-.task-item button:disabled {
-  background: #a0a0a0;
-  transform: none;
-}
+.task-item button:disabled { background: #c7c7cc; }
 
 /* 积分历史 */
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 300px;
+  gap: 6px;
+  max-height: 250px;
   overflow-y: auto;
 }
 
@@ -687,67 +678,78 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: rgba(248, 249, 250, 0.95);
+  padding: 8px 12px;
+  background: #f5f5f7;
   border-radius: 8px;
 }
 
 .item-info {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
 .type {
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
 }
 
 .type.earn {
-  background: rgba(66, 184, 131, 0.2);
-  color: #42b883;
+  background: #34c759;
+  color: white;
 }
 
 .type.spend {
-  background: rgba(245, 108, 108, 0.2);
-  color: #f56c6c;
+  background: #ff3b30;
+  color: white;
 }
 
-.desc { color: #2c3e50; }
-.time { color: #95a5a6; font-size: 12px; }
+.desc { color: #1d1d1f; font-size: 13px; }
+.time { color: #86868b; font-size: 11px; }
 
 .item-right {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
-.amount { font-weight: 600; }
-.amount.earn { color: #42b883; }
-.amount.spend { color: #f56c6c; }
+.amount { font-weight: 600; font-size: 13px; }
+.amount.earn { color: #34c759; }
+.amount.spend { color: #ff3b30; }
 
 /* 图表 */
 .days-select {
-  padding: 6px 14px;
-  border: 2px solid #dce6e9;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  cursor: pointer;
+  padding: 5px 10px;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1d1d1f;
+  background: #f5f5f7;
 }
 
 .chart-wrapper {
-  height: 300px;
+  height: 320px;
   position: relative;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
+  background: #f5f5f7;
+  border-radius: 10px;
   padding: 10px;
 }
 
 .loading, .empty {
   text-align: center;
-  padding: 30px;
-  color: #7f8c8d;
+  padding: 20px;
+  color: #86868b;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  .main-layout {
+    flex-direction: column;
+  }
+  .right-column {
+    width: 100%;
+  }
 }
 </style>
