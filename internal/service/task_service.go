@@ -158,7 +158,7 @@ func (s *TaskService) CheckIn(taskID, userID uint64) (*model.CheckIn, error) {
 		return nil, errors.New("already checked in today")
 	}
 
-	checkin, err := s.checkinSvc.Create(taskID, userID, task.Points)
+	checkin, err := s.checkinSvc.Create(taskID, userID, task.Points, task.Title)
 	if err != nil {
 		return nil, err
 	}

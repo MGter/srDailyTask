@@ -172,10 +172,25 @@ func (r *WalletRepository) GetDailyStats(userID uint64, days int) ([]*DailyStats
 
 	for walletRows.Next() {
 		s := &DailyStats{}
-		err := walletRows.Scan(&s.Date, &s.Earn, &s.Spend)
+		var dateStr string
+		err := walletRows.Scan(&dateStr, &s.Earn, &s.Spend)
 		if err != nil {
 			return nil, err
 		}
+		// 解析日期格式，可能是 time.Time 格式
+		var date time.Time
+		if len(dateStr) > 10 {
+			date, err = time.Parse("2006-01-02T15:04:05Z07:00", dateStr)
+			if err != nil {
+				date, err = time.Parse("2006-01-02", dateStr[:10])
+				if err != nil {
+					return nil, err
+				}
+			}
+			dateStr = date.Format("2006-01-02")
+		}
+		s.Date = dateStr
+		logger.Info("wallet_repo.go", 185, "Found wallet: date=%s, earn=%d, spend=%d", s.Date, s.Earn, s.Spend)
 		if walletMap[s.Date] != nil {
 			walletMap[s.Date].Earn += s.Earn
 			walletMap[s.Date].Spend += s.Spend

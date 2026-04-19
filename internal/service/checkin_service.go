@@ -20,7 +20,7 @@ func NewCheckInService() *CheckInService {
 	}
 }
 
-func (s *CheckInService) Create(taskID, userID uint64, points int) (*model.CheckIn, error) {
+func (s *CheckInService) Create(taskID, userID uint64, points int, taskTitle string) (*model.CheckIn, error) {
 	now := time.Now()
 	checkin := &model.CheckIn{
 		TaskID:    taskID,
@@ -33,12 +33,13 @@ func (s *CheckInService) Create(taskID, userID uint64, points int) (*model.Check
 		return nil, err
 	}
 
+	desc := "打卡: " + taskTitle
 	wallet := &model.Wallet{
 		UserID:      userID,
 		Balance:     points,
 		Type:        model.WalletEarn,
 		Amount:      points,
-		Description: "Check-in reward",
+		Description: desc,
 		CreatedAt:   now,
 		RecordTime:  now,
 	}
