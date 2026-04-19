@@ -509,7 +509,7 @@ onMounted(async () => {
 .dashboard-container {
   min-height: 100vh;
   padding: 20px;
-  background-image: url('/assets/kita.png');
+  background-image: url('/assets/kita.webp');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

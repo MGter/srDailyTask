@@ -55,7 +55,7 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-image: url('/assets/kita.png');
+  background-image: url('/assets/kita.webp');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
