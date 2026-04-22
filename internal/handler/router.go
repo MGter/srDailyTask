@@ -60,8 +60,12 @@ func NewRouter() *http.ServeMux {
 	// Check-in routes
 	mux.HandleFunc("/api/checkin/today/", methodHandler("GET", pointHandler.GetTodayChecked))
 	mux.HandleFunc("/api/checkin/user/", methodHandler("GET", pointHandler.GetCheckIns))
-	mux.HandleFunc("/api/checkin/{taskId}/skip", methodHandler("POST", taskHandler.SkipCheckIn))
 	mux.HandleFunc("/api/checkin/", func(w http.ResponseWriter, r *http.Request) {
+		// 检查是否是 skip 请求
+		if strings.HasSuffix(r.URL.Path, "/skip") && r.Method == "POST" {
+			taskHandler.SkipCheckIn(w, r)
+			return
+		}
 		if r.Method == "POST" {
 			taskHandler.CheckIn(w, r)
 		} else if r.Method == "DELETE" {
