@@ -484,7 +484,6 @@ const cancelCheckin = async (taskId) => {
 }
 
 const skipTask = async (taskId) => {
-  if (!confirm('确定跳过此任务吗？跳过后不计积分。')) return
   try {
     await checkinApi.skip(taskId, { user_id: userId })
     const task = tasks.value.find(t => t.id === taskId)
