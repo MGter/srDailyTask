@@ -589,6 +589,13 @@ const renderChart = () => {
   const spendData = dailyStats.value.map(s => s.spend)
   const balanceData = dailyStats.value.map(s => s.balance)
 
+  // 累计积分：从第一天开始累加每日balance
+  let cumulative = 0
+  const cumulativeData = dailyStats.value.map(s => {
+    cumulative += s.balance
+    return cumulative
+  })
+
   console.log('Chart labels:', labels, 'earnData:', earnData)
 
   chartInstance = new Chart(ctx, {
@@ -613,6 +620,15 @@ const renderChart = () => {
           data: balanceData,
           backgroundColor: '#ff9500',
           borderRadius: 6
+        },
+        {
+          label: '累计积分',
+          data: cumulativeData,
+          type: 'line',
+          borderColor: '#007aff',
+          yAxisID: 'y1',
+          tension: 0.3,
+          pointRadius: 3
         }
       ]
     },
@@ -636,12 +652,23 @@ const renderChart = () => {
       },
       scales: {
         y: {
+          position: 'left',
           beginAtZero: true,
           ticks: {
             color: '#1d1d1f'
           },
           grid: {
             color: '#e5e5e5'
+          }
+        },
+        y1: {
+          position: 'right',
+          beginAtZero: true,
+          ticks: {
+            color: '#007aff'
+          },
+          grid: {
+            drawOnChartArea: false
           }
         },
         x: {
