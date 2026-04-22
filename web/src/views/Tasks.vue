@@ -604,6 +604,15 @@ const renderChart = () => {
       labels,
       datasets: [
         {
+          label: '累计积分',
+          data: cumulativeData,
+          type: 'line',
+          borderColor: '#007aff',
+          yAxisID: 'y1',
+          tension: 0.3,
+          pointRadius: 3
+        },
+        {
           label: '当日积累',
           data: earnData,
           backgroundColor: '#34c759',
@@ -620,15 +629,6 @@ const renderChart = () => {
           data: balanceData,
           backgroundColor: '#ff9500',
           borderRadius: 6
-        },
-        {
-          label: '累计积分',
-          data: cumulativeData,
-          type: 'line',
-          borderColor: '#007aff',
-          yAxisID: 'y1',
-          tension: 0.3,
-          pointRadius: 3
         }
       ]
     },
