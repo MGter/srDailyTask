@@ -217,14 +217,16 @@ func (s *TaskService) CancelCheckIn(taskID, userID uint64) error {
 		logger.Error("task_service.go", 195, "Failed to delete wallet record: %v", err)
 	}
 
-	// 更新用户积分
-	user, err := s.userSvc.GetByID(userID)
-	if err != nil {
-		return err
-	}
-	newPoints := user.Points - task.Points
-	if err := s.userSvc.UpdatePoints(userID, newPoints); err != nil {
-		return err
+	// 更新用户积分（只有实际打卡才扣减积分，跳过的不扣）
+	if checkin.Points > 0 {
+		user, err := s.userSvc.GetByID(userID)
+		if err != nil {
+			return err
+		}
+		newPoints := user.Points - checkin.Points
+		if err := s.userSvc.UpdatePoints(userID, newPoints); err != nil {
+			return err
+		}
 	}
 
 	logger.Info("task_service.go", 205, "User %d cancelled checkin for task %d", userID, taskID)
