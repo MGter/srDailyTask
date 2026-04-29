@@ -208,6 +208,29 @@
             <div v-if="loadingStats" class="loading">加载中...</div>
             <canvas v-show="!loadingStats" ref="chartCanvas"></canvas>
           </div>
+
+          <div class="heatmap-section" v-if="!loadingStats && heatmapWeeks.length > 0">
+            <div class="heatmap-title">每日结余热力图</div>
+            <div class="heatmap-scroll">
+              <div class="heatmap-layout">
+                <div class="weekday-labels">
+                  <span v-for="label in weekLabels" :key="label">{{ label }}</span>
+                </div>
+                <div class="heatmap-weeks">
+                  <div class="heatmap-week" v-for="(week, weekIndex) in heatmapWeeks" :key="weekIndex">
+                    <span class="month-label">{{ weekIndex === 0 || week.month !== heatmapWeeks[weekIndex - 1]?.month ? week.month + '月' : '' }}</span>
+                    <span
+                      v-for="(day, dayIndex) in week.days"
+                      :key="dayIndex"
+                      class="heatmap-cell"
+                      :class="day ? heatmapClass(day.balance) : 'empty'"
+                      :title="formatHeatmapTitle(day)"
+                    ></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -308,6 +331,58 @@ const todayStats = computed(() => {
     balance: stat?.balance || 0,
     total: user.value?.points || 0
   }
+})
+
+const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
+
+const formatHeatmapTitle = (day) => {
+  if (!day) return ''
+  return `${day.date}\n累计 +${day.earn}\n消耗 -${day.spend}\n结余 ${day.balance >= 0 ? '+' : ''}${day.balance}`
+}
+
+const heatmapClass = (balance) => {
+  if (balance >= 30) return 'pos-3'
+  if (balance >= 10) return 'pos-2'
+  if (balance > 0) return 'pos-1'
+  if (balance <= -30) return 'neg-3'
+  if (balance <= -10) return 'neg-2'
+  if (balance < 0) return 'neg-1'
+  return 'zero'
+}
+
+const heatmapWeeks = computed(() => {
+  const stats = dailyStats.value.map(s => ({
+    date: s.date,
+    earn: s.earn,
+    spend: s.spend,
+    balance: s.balance,
+    weekday: new Date(`${s.date}T00:00:00`).getDay(),
+    month: Number(s.date.slice(5, 7))
+  }))
+
+  if (stats.length === 0) return []
+
+  const weeks = []
+  let currentWeek = Array(7).fill(null)
+
+  stats.forEach((day, index) => {
+    if (index === 0 && day.weekday > 0) {
+      currentWeek = Array(7).fill(null)
+    }
+
+    currentWeek[day.weekday] = day
+
+    const isLastDay = index === stats.length - 1
+    if (day.weekday === 6 || isLastDay) {
+      weeks.push({
+        days: currentWeek,
+        month: currentWeek.find(Boolean)?.month || day.month
+      })
+      currentWeek = Array(7).fill(null)
+    }
+  })
+
+  return weeks
 })
 
 const todayTasks = computed(() => {
@@ -744,6 +819,23 @@ onMounted(async () => {
     padding: 3px 6px;
     font-size: 11px;
   }
+
+  .heatmap-title {
+    font-size: 12px;
+  }
+
+  .heatmap-cell {
+    width: 9px;
+    height: 9px;
+  }
+
+  .heatmap-week {
+    grid-template-rows: 13px repeat(7, 9px);
+  }
+
+  .weekday-labels {
+    grid-template-rows: repeat(7, 9px);
+  }
 }
 
 header {
@@ -1168,6 +1260,77 @@ h1 {
   width: 100% !important;
   height: 100% !important;
 }
+
+.heatmap-section {
+  margin-top: 10px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
+}
+
+.heatmap-title {
+  color: #1d1d1f;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.heatmap-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.heatmap-layout {
+  display: flex;
+  gap: 6px;
+  min-width: max-content;
+}
+
+.weekday-labels {
+  display: grid;
+  grid-template-rows: repeat(7, 10px);
+  gap: 3px;
+  padding-top: 17px;
+  color: #86868b;
+  font-size: 9px;
+  line-height: 10px;
+}
+
+.heatmap-weeks {
+  display: flex;
+  gap: 3px;
+}
+
+.heatmap-week {
+  display: grid;
+  grid-template-rows: 14px repeat(7, 10px);
+  gap: 3px;
+}
+
+.month-label {
+  color: #86868b;
+  font-size: 9px;
+  line-height: 12px;
+  white-space: nowrap;
+}
+
+.heatmap-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #ebedf0;
+}
+
+.heatmap-cell.zero,
+.heatmap-cell.empty {
+  background: #ebedf0;
+}
+
+.heatmap-cell.pos-1 { background: #b7ebc6; }
+.heatmap-cell.pos-2 { background: #6bd982; }
+.heatmap-cell.pos-3 { background: #34c759; }
+.heatmap-cell.neg-1 { background: #ffc1bd; }
+.heatmap-cell.neg-2 { background: #ff8a83; }
+.heatmap-cell.neg-3 { background: #ff3b30; }
 
 .loading, .empty {
   text-align: center;
