@@ -12,6 +12,7 @@ daily_task
 # Output
 log/
 *.log
+uploads/
 
 # Go workspace file
 go.work

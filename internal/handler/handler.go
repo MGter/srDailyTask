@@ -61,6 +61,10 @@ func getURLParamFromPath(path string, prefix string) (uint64, error) {
 	return result, nil
 }
 
+func uintToString(n uint64) string {
+	return strconv.FormatUint(n, 10)
+}
+
 func getIDFromPath(r *http.Request) (uint64, error) {
 	return getURLParamFromPath(r.URL.Path, "/api/user/")
 }

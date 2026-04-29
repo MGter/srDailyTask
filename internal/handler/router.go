@@ -15,6 +15,7 @@ func NewRouter() *http.ServeMux {
 	taskHandler := NewTaskHandler()
 	walletHandler := NewWalletHandler()
 	pointHandler := NewPointHandler()
+	longTermHandler := NewLongTermItemHandler()
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +29,24 @@ func NewRouter() *http.ServeMux {
 	// User routes
 	mux.HandleFunc("/api/user/register", methodHandler("POST", userHandler.Register))
 	mux.HandleFunc("/api/user/login", methodHandler("POST", userHandler.Login))
-	mux.HandleFunc("/api/user/", userHandler.GetByID)
+	mux.HandleFunc("/api/user/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/avatar") {
+			if r.Method == "POST" {
+				userHandler.UploadAvatar(w, r)
+			} else {
+				http.Error(w, "Method not allowed", 405)
+			}
+			return
+		}
+		switch r.Method {
+		case "GET":
+			userHandler.GetByID(w, r)
+		case "PUT":
+			userHandler.Update(w, r)
+		default:
+			http.Error(w, "Method not allowed", 405)
+		}
+	})
 	mux.HandleFunc("/api/users", methodHandler("GET", userHandler.List))
 
 	// Task routes
@@ -99,6 +117,31 @@ func NewRouter() *http.ServeMux {
 	mux.HandleFunc("/api/points/", methodHandler("GET", pointHandler.GetPointHistory))
 	mux.HandleFunc("/api/points/daily/", methodHandler("GET", pointHandler.GetDailyStats))
 
+	// Long-term item routes
+	mux.HandleFunc("/api/long-term-items", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			longTermHandler.Create(w, r)
+			return
+		}
+		http.Error(w, "Method not allowed", 405)
+	})
+	mux.HandleFunc("/api/long-term-items/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/scrap") && r.Method == "POST" {
+			longTermHandler.Scrap(w, r)
+			return
+		}
+		switch r.Method {
+		case "GET":
+			longTermHandler.GetByUserID(w, r)
+		case "PUT":
+			longTermHandler.Update(w, r)
+		case "DELETE":
+			longTermHandler.Delete(w, r)
+		default:
+			http.Error(w, "Method not allowed", 405)
+		}
+	})
+
 	logger.Info("router.go", 56, "Router initialized")
 	return mux
 }
@@ -111,6 +154,9 @@ func SetupServer(distDir string) http.Handler {
 	if distDir != "" && dirExists(distDir) {
 		fs := http.FileServer(http.Dir(distDir))
 		mux.Handle("/assets/", fs)
+
+		uploadsFS := http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads")))
+		mux.Handle("/uploads/", uploadsFS)
 
 		// 处理 SPA 路由 - 对于非 API 请求返回 index.html
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

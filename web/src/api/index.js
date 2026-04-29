@@ -13,6 +13,10 @@ export const userApi = {
   register: (data) => api.post('/user/register', data),
   login: (data) => api.post('/user/login', data),
   getUser: (id) => api.get(`/user/${id}`),
+  updateUser: (id, data) => api.put(`/user/${id}`, data),
+  uploadAvatar: (id, data) => api.post(`/user/${id}/avatar`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
   getUsers: (params) => api.get('/users', { params })
 }
 
@@ -48,6 +52,15 @@ export const walletApi = {
 export const pointsApi = {
   getHistory: (userId, params) => api.get(`/points/${userId}`, { params }),
   getDailyStats: (userId, params) => api.get(`/points/daily/${userId}`, { params })
+}
+
+// 长期主义
+export const longTermApi = {
+  list: (userId) => api.get(`/long-term-items/${userId}`),
+  create: (data) => api.post('/long-term-items', data),
+  update: (id, data) => api.put(`/long-term-items/${id}`, data),
+  scrap: (id, data) => api.post(`/long-term-items/${id}/scrap`, data),
+  delete: (id, userId) => api.delete(`/long-term-items/${id}`, { data: { user_id: userId } })
 }
 
 export default api
