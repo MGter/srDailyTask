@@ -3,8 +3,13 @@
     <header>
       <h1>每日打卡</h1>
       <div class="user-info">
-        <span>{{ user?.username }}</span>
-        <span class="points">积分: {{ user?.points || 0 }}</span>
+        <span class="username">{{ user?.username }}</span>
+        <div class="points-cards">
+          <span class="point-card earn">当日累计 {{ todayStats.earn }}</span>
+          <span class="point-card spend">当日消耗 {{ todayStats.spend }}</span>
+          <span class="point-card balance">当日结余 {{ todayStats.balance }}</span>
+          <span class="point-card total">总计 {{ todayStats.total }}</span>
+        </div>
         <button class="logout-btn" @click="logout">退出</button>
       </div>
     </header>
@@ -292,6 +297,17 @@ const todayText = computed(() => {
   const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
   const now = new Date()
   return `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${days[now.getDay()]}`
+})
+
+const todayStats = computed(() => {
+  const today = new Date().toISOString().slice(0, 10)
+  const stat = dailyStats.value.find(s => s.date === today)
+  return {
+    earn: stat?.earn || 0,
+    spend: stat?.spend || 0,
+    balance: stat?.balance || 0,
+    total: user.value?.points || 0
+  }
 })
 
 const todayTasks = computed(() => {
@@ -707,6 +723,27 @@ onMounted(async () => {
   .dashboard-container {
     padding: 15px 10px 50px 10px;
   }
+
+  header {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .user-info {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .points-cards {
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .point-card {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
 }
 
 header {
@@ -733,9 +770,44 @@ h1 {
   align-items: center;
 }
 
-.points {
-  color: #34c759;
+.username {
+  font-weight: 500;
+  color: #1d1d1f;
+}
+
+.points-cards {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.point-card {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.point-card.earn {
+  background: #e8f8ee;
+  color: #34c759;
+}
+
+.point-card.spend {
+  background: #ffeceb;
+  color: #ff3b30;
+}
+
+.point-card.balance {
+  background: #fff4e5;
+  color: #ff9500;
+}
+
+.point-card.total {
+  background: #e8f2ff;
+  color: #007aff;
 }
 
 .logout-btn {
