@@ -28,6 +28,7 @@ Thumbs.db
 
 # Claude
 .claude/
+.superpowers/
 
 # Config with sensitive data (use config.yaml.example instead)
 config/config.yaml
