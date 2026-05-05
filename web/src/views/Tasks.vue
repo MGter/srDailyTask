@@ -1363,8 +1363,9 @@ const renderChart = () => {
   const ctx = chartCanvas.value.getContext('2d')
   const labels = dailyStats.value.map(s => s.date.slice(5))
 
-  // 累计积分：从第一天开始累加每日balance
-  let cumulative = 0
+  // 累计积分：从用户真实总积分开始，确保累计曲线最后一天等于当前总分
+  const totalBalanceInRange = dailyStats.value.reduce((sum, s) => sum + s.balance, 0)
+  let cumulative = (user.value?.points || 0) - totalBalanceInRange
   const cumulativeData = dailyStats.value.map(s => {
     cumulative += s.balance
     return cumulative
